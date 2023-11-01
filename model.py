@@ -1,9 +1,9 @@
 import json
+import config
 
 # --------DB-----------
 filename = "task.json"
 task_items = []
-categories = [(1,"Default"), (2, "Easy"), (3, "Medium"), (4, "Hard")]
 
 def load_db():
     json_dict = {}
@@ -26,7 +26,8 @@ task_items = load_db()
 # --------Functions----------- 
 def save_db():
     with open(filename, 'w') as f:
-        return json.dump(task_items, f)
+        return json.dump(task_items, f, indent=4)
+
 
 def get_max_id():
     task_items = load_db()
@@ -65,11 +66,11 @@ def update_task(task_id, update_task):
             save_db()
 
 def get_categories():
-    return categories
+    return config.categories
 
 def get_category_name_by_id(category_id):
     # Iterate through the list of tuples
-    for item in categories:
+    for item in config.categories:
         if item[0] == category_id:
             return item[1]
     return None
@@ -77,7 +78,7 @@ def get_category_name_by_id(category_id):
 
 def get_category_id_by_name(category_name): 
     # Iterate through the list of tuples
-    for item in categories:
+    for item in config.categories:
         if item[1] == category_name:
             return item[0]
     return None

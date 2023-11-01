@@ -1,10 +1,6 @@
 from html import unescape
 from flask import (Flask, jsonify, request, 
                    render_template,redirect, url_for, flash)
-from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SubmitField, SelectField
-from wtforms.validators import InputRequired, DataRequired, Length
-from werkzeug.utils import escape
 
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
@@ -13,6 +9,7 @@ from flask_jwt_extended import JWTManager
 
 import requests
 import config
+import utility
 import model
 
 app = Flask(__name__)
@@ -44,42 +41,12 @@ def authorized_request():
     return response.status_code
 
  
-# #################### WT-FORM ##########################
-class ItemForm(FlaskForm):
-    title       = StringField("Title", validators=[InputRequired("Input is required!"), DataRequired("Data is required!"), Length(min=5, max=20, message="Input must be between 5 and 20 characters long")])
-    description = TextAreaField("Description", validators=[InputRequired("Input is required!"), DataRequired("Data is required!"), Length(min=5, max=2000, message="Input must be between 5 and 40 characters long")])
-    category    = SelectField("Category",
-                              choices= model.categories,
-                              coerce=int)
- 
-class NewItemForm(ItemForm):
-    submit      = SubmitField("Submit")
-
-class EditItemForm(ItemForm):
-    status    = SelectField("status",
-                            choices=[('Pending', 'Pending'),
-                                    ('Completed', 'Completed')],
-                            coerce=str)
-    submit      = SubmitField("Update item")
-
-class DeleteItemForm(FlaskForm):
-    submit      = SubmitField("Delete item")
-
-class AuthForm(FlaskForm):
-    submit      = SubmitField("Get Token")
-    
-
-class FilterForm(FlaskForm):
-    title       = StringField("Title", validators=[Length(max=20)])
-    category    = SelectField("Category", coerce=str)
-    submit      = SubmitField("Filter")
-
 # #################### ENDPOINT ##########################
 # create_access_token() function is used to actually generate the JWT.
 @app.route("/login", methods=["GET","POST"])
 def login():
     is_authen = get_is_auth()
-    authForm = AuthForm() 
+    authForm = utility.AuthForm() 
     if not get_is_auth() :
         if request.method == "POST":
             config.jwt_token = create_access_token(identity=config.JWT_SECRET_KEY)
@@ -110,7 +77,7 @@ def protected():
 def item(task_id):
     task_info = {}
     if model.is_number(task_id):
-        deleteItemForm = DeleteItemForm() 
+        deleteItemForm = utility.DeleteItemForm() 
         task_info = model.get_task_info(int(task_id))
         if task_info:
             return render_template("item.html", 
@@ -128,12 +95,13 @@ def item(task_id):
 # -------- LIST ITEMS  ------------
 @app.route("/")
 def home(): 
-    form = FilterForm(request.args, meta={"csrf": False})
+    form = utility.FilterForm(request.args, meta={"csrf": False})
     filter_items = []
 
-    categories = model.get_categories()
-    categories.insert(0, (0, "---"))
-    form.category.choices = categories
+    filter_category = config.categories
+    if not model.get_category_name_by_id(0):
+        filter_category.insert(0, (0, "---"))
+    form.category.choices = filter_category
 
     if form.validate():  
         title = form.title.data
@@ -160,7 +128,10 @@ def new_item():
     if (auth_result != 200):
         return redirect(url_for("login")) 
 
-    form = NewItemForm() 
+    form = utility.NewItemForm() 
+    if model.get_category_name_by_id(0):
+        form.category.choices = config.categories[1:]
+
     # Form
     if form.validate_on_submit():
         if model.get_category_name_by_id(int(request.form['category'])):
@@ -195,7 +166,7 @@ def edit_item(task_id):
         task_info = model.get_task_info(task_id) 
 
         if task_info:
-            form = EditItemForm()
+            form = utility.EditItemForm()
             
             if form.validate_on_submit(): 
                 category_name = model.get_category_name_by_id(int(request.form['category']))
@@ -211,6 +182,10 @@ def edit_item(task_id):
                 flash("Item {} has been successfully updated".format(form.title.data), "success")
                 return redirect(url_for("item", task_id=task_id))
             form.status.default = task_info["status"]
+
+            if model.get_category_name_by_id(0):
+                form.category.choices = config.categories[1:]
+            
             form.category.default = model.get_category_id_by_name(task_info["category"])
             form.process()
             form.title.data       = task_info["title"]
