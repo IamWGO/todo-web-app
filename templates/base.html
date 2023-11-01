@@ -24,13 +24,29 @@
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarResponsive">
+        
         <ul class="navbar-nav ml-auto">
           <li class="nav-item {{ 'active' if active_page == 'home' else '' }}">
             <a href="{{ url_for('home') }}" class="nav-link">Home</a>
           </li>
-          <li class="nav-item {{ 'active' if active_page == 'new_item' else '' }}">
-            <a href="{{ url_for('new_item') }}" class="nav-link">Add new item</a>
-          </li>
+
+          {% if active_page != 'login' %}
+            {% if active_page != 'new_item' %}
+              <li class="nav-item {{ 'active' if active_page == 'new_item' else '' }}">
+                <a href="{{ url_for('new_item') }}" class="nav-link">Add new item</a> 
+              </li>
+            {% endif %}
+
+            {% if is_authen %}
+              <li class="nav-item">
+                <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
+              </li>
+            {% else %}
+              <li class="nav-item">
+                <a href="{{ url_for('login') }}" class="nav-link">Get Token</a>
+              </li>
+            {% endif %}
+          {% endif %}
         </ul>
       </div>
     </div>

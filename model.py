@@ -42,13 +42,11 @@ def get_max_id():
 def add_new_task(new_task): 
     task_items.append(new_task)
     save_db()
-    return {}
     
 
 def get_task_info(task_id):
     return_task = None
     for task in task_items:
-        task["category_name"] = get_category_name_by_id(task["category"])
         if task["id"] == task_id:
             return_task = task  # Return the task if the ID matches
     
@@ -94,7 +92,6 @@ def get_tasks_by_category():
     # Group tasks by category
     for task in task_items:
         category = task["category"]
-        print(category)
         if category not in tasks_by_category:
             tasks_by_category[category] = []
         
@@ -132,5 +129,5 @@ def is_number(task_id):
     try: 
         int(task_id)
         return True
-    except IndexError:
+    except ValueError:
         return False
