@@ -6,7 +6,7 @@ from werkzeug.utils import escape
 
 # #################### WT-FORM ##########################
 class ItemForm(FlaskForm):
-    title       = StringField("Title", validators=[InputRequired("Input is required!"), DataRequired("Data is required!"), Length(min=5, max=20, message="Input must be between 5 and 20 characters long")])
+    title       = StringField("Title", validators=[InputRequired("Input is required!"), DataRequired("Data is required!"), Length(min=5, max=100, message="Input must be between 5 and 20 characters long")])
     description = TextAreaField("Description", validators=[InputRequired("Input is required!"), DataRequired("Data is required!"), Length(min=5, max=2000, message="Input must be between 5 and 40 characters long")])
     category    = SelectField("Category", coerce=int)
  

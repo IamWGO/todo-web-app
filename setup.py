@@ -1,11 +1,9 @@
+from datetime import timedelta
 from html import unescape
 from flask import (Flask, jsonify, request, 
                    render_template,redirect, url_for, flash)
 
-from flask_jwt_extended import create_access_token
-from flask_jwt_extended import get_jwt_identity
-from flask_jwt_extended import jwt_required
-from flask_jwt_extended import JWTManager
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
 
 import requests
 import config
@@ -27,7 +25,10 @@ def get_is_auth():
 def protected():
     # Access the identity of the current user with get_jwt_identity
     current_user = get_jwt_identity()
-    return jsonify(logged_in_as=current_user), 200
+    # Create a new token with an extended expiration time 1 minutes
+    expires = timedelta(minutes=1)
+    new_token = create_access_token(identity=current_user, expires_delta=expires)
+    return jsonify(logged_in_as=new_token), 200
 
 def authorized_request():
     # Create the 'Authorization' header with the JWT token 
@@ -38,11 +39,22 @@ def authorized_request():
     # Make an HTTP GET request to the API with the 'Authorization' header
     request_url = request.url_root + "/protected"
     response = requests.get(request_url, headers=headers)
+    if response.status_code != 200:
+        config.jwt_token = ""
+
     return response.status_code
 
  
-# #################### ENDPOINT ##########################
+# #################### ENDPOINT - AUTH PROCESS ##########################
 # create_access_token() function is used to actually generate the JWT.
+
+@app.route("/protected", methods=["GET"])
+@jwt_required()
+def protected():
+    # Access the identity of the current user with get_jwt_identity
+    current_user = get_jwt_identity()
+    return jsonify(logged_in_as=current_user), 200
+
 @app.route("/login", methods=["GET","POST"])
 def login():
     is_authen = get_is_auth()
@@ -63,15 +75,7 @@ def logout():
     flash("You have logout !! ", "success")
     return redirect(url_for("home"))
 
-
-@app.route("/protected", methods=["GET"])
-@jwt_required()
-def protected():
-    # Access the identity of the current user with get_jwt_identity
-    current_user = get_jwt_identity()
-    return jsonify(logged_in_as=current_user), 200
-
-
+# #################### ENDPOINT - CRUD PROCESS ############### ###########
 # -------- ITEM DETAIL  ------------
 @app.route("/item/<int:task_id>", methods=["GET"])
 def item(task_id):
@@ -181,6 +185,7 @@ def edit_item(task_id):
 
                 flash("Item {} has been successfully updated".format(form.title.data), "success")
                 return redirect(url_for("item", task_id=task_id))
+            
             form.status.default = task_info["status"]
 
             if model.get_category_name_by_id(0):

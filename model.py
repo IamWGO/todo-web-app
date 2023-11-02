@@ -46,24 +46,25 @@ def add_new_task(new_task):
     
 
 def get_task_info(task_id):
-    return_task = None
     for task in task_items:
         if task["id"] == task_id:
-            return_task = task  # Return the task if the ID matches
+            return task  # Return the task if the ID matches
     
-    return return_task  
+    return None  
 
 def delete_task(task_id):
     for index, task in enumerate(task_items):
         if task["id"] == task_id:
             del task_items[index]
             save_db()
+            break
     
 def update_task(task_id, update_task):
     for index, task in enumerate(task_items):
         if task["id"] == task_id:
             task_items[index] = update_task
             save_db()
+            break
 
 def get_categories():
     return config.categories
@@ -105,7 +106,8 @@ def search_by_title_and_category_name(search_text, category_id):
     category_name = get_category_name_by_id(category_id)
     matching_tasks = []
     for task in task_items:
-        if search_text.lower() in task["description"].lower() and category_name.lower() in task["category"].lower():
+        if (search_text.lower() in task["description"].lower() 
+            and category_name.lower() in task["category"].lower()):
             matching_tasks.append(task)
     return matching_tasks
 
