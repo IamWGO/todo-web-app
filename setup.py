@@ -19,19 +19,12 @@ app.config["JWT_SECRET_KEY"] = config.JWT_SECRET_KEY
 jwt = JWTManager(app)
 
 def get_is_auth():
-    return config.jwt_token != ""
-
-@jwt_required()
-def protected():
-    # Access the identity of the current user with get_jwt_identity
-    current_user = get_jwt_identity()
-    # Create a new token with an extended expiration time 1 minutes
-    expires = timedelta(minutes=1)
-    new_token = create_access_token(identity=current_user, expires_delta=expires)
-    return jsonify(logged_in_as=new_token), 200
-
+    return config.jwt_token != "" 
+ 
+# #################### ENDPOINT - AUTH PROCESS ##########################
+# the 'Authorization' header with the JWT token 
 def authorized_request():
-    # Create the 'Authorization' header with the JWT token 
+    
     headers = {
         'Authorization': f"Bearer {config.jwt_token}"
     }
@@ -44,9 +37,15 @@ def authorized_request():
 
     return response.status_code
 
- 
-# #################### ENDPOINT - AUTH PROCESS ##########################
-# create_access_token() function is used to actually generate the JWT.
+# Custom authentication decorator
+def requires_authentication(func):
+    def decorated_function(*args, **kwargs):
+        auth_result = authorized_request()
+        if (auth_result != 200):
+            return redirect(url_for("login")) 
+    
+        return func(*args, **kwargs)
+    return decorated_function
 
 @app.route("/protected", methods=["GET"])
 @jwt_required()
@@ -131,14 +130,11 @@ def item(task_id):
     return redirect(url_for("home")) 
 
 
-# -------- NEW ITEM  ------------
-@app.route("/tasks/new", methods=["GET", "POST"])
-def new_item():
-    # if not authorized then redirect to login
-    auth_result = authorized_request()
-    if (auth_result != 200):
-        return redirect(url_for("login")) 
 
+# -------- NEW ITEM  ------------
+@app.route("/tasks/new", methods=["GET", "POST"] , endpoint="new_item")
+@requires_authentication
+def new_item():
     form = utility.NewItemForm() 
     
     # Form
@@ -164,12 +160,9 @@ def new_item():
 
 
 # -------- UPDATE ITEM  ------------
-@app.route("/tasks/<int:task_id>/edit", methods=["GET", "POST"])
+@app.route("/tasks/<int:task_id>/edit", methods=["GET", "POST"], endpoint="edit_item")
+@requires_authentication
 def edit_item(task_id):
-    # if not authorized then redirect to login
-    auth_result = authorized_request()
-    if (auth_result != 200):
-        return redirect(url_for("login")) 
  
     if model.is_number(task_id): 
         task_info = model.get_task_info(task_id) 
@@ -211,6 +204,7 @@ def edit_item(task_id):
         
 # -------- COMPLATE TASK -------
 @app.route("/tasks/<int:task_id>/complate", methods=["POST"], endpoint="complete_item")
+@requires_authentication
 def set_task_completed(task_id):
     task_info = model.get_task_info(task_id) 
     if task_info:
@@ -225,13 +219,9 @@ def set_task_completed(task_id):
     return redirect(url_for("home")) 
     
 # -------- DELETE ITEM  ------------
-@app.route("/tasks/<int:task_id>/delete", methods=["POST"])
+@app.route("/tasks/<int:task_id>/delete", methods=["POST"], endpoint="delete_item")
+@requires_authentication
 def delete_item(task_id): 
-    # if not authorized then redirect to login
-    auth_result = authorized_request()
-    if (auth_result != 200):
-        return redirect(url_for("login")) 
- 
     if model.is_number(task_id): 
         task_info = model.get_task_info(task_id)
         if task_info:
