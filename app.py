@@ -48,12 +48,15 @@ def requires_authentication(func):
     
         return func(*args, **kwargs)
     return decorated_function
+
+def is_access_from_postman():
+    user_agent = request.headers.get('User-Agent')
+    substring = "Postman"
+    return substring in user_agent
  
 def allow_access_only_postman(func):
     def decorated_function(*args, **kwargs): 
-        user_agent = request.headers.get('User-Agent')
-        substring = "Postman"
-        if not substring in user_agent:
+        if not is_access_from_postman():
             flash(f"url [{request.url}] is not allowed to access", "danger")
             return redirect(url_for("home"))
         return func(*args, **kwargs)
@@ -61,9 +64,7 @@ def allow_access_only_postman(func):
 
 def allow_access_only_browser(func):
     def decorated_function(*args, **kwargs): 
-        user_agent = request.headers.get('User-Agent')
-        substring = "Postman"
-        if substring in user_agent:
+        if is_access_from_postman():
             return "Postman can't access to this URL"
         return func(*args, **kwargs)
     return decorated_function
@@ -265,13 +266,22 @@ def delete_item(task_id):
 
 # -------- ERROR HANDLER  ------------
 def page_404(e):
-    return render_template("errors/404.html", is_authen = get_is_auth())
+    if is_access_from_postman():
+        return "404: Page Not Found"
+    else:
+        return render_template("errors/404.html", is_authen = get_is_auth())
 
 def page_405(e):
-    return render_template("errors/405.html", is_authen = get_is_auth())
+    if is_access_from_postman():
+        return "405: Method Not Allowed"
+    else:
+        return render_template("errors/405.html", is_authen = get_is_auth())
 
 def page_401(e):
-    return render_template("errors/401.html", is_authen = get_is_auth())
+    if is_access_from_postman():
+        return "401: Unauthorized Error"
+    else:
+        return render_template("errors/401.html", is_authen = get_is_auth())
 
 app.register_error_handler(404, page_404)
 app.register_error_handler(405, page_405)

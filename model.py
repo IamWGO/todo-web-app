@@ -111,11 +111,17 @@ def search_by_title_and_category_name(search_text, category_id):
             matching_tasks.append(task)
     return matching_tasks
 
-def search_tasks_by_category_name(category_id):
-    category_name = get_category_name_by_id(category_id)
+def search_tasks_by_category_name(category_name):
     matching_tasks = []
     for task in task_items:
         if category_name.lower() in task["category"].lower():
+            matching_tasks.append(task)
+    return matching_tasks
+
+def search_completed_tasks():
+    matching_tasks = []
+    for task in task_items:
+        if "completed" in task["status"].lower():
             matching_tasks.append(task)
     return matching_tasks
 
