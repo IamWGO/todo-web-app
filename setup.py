@@ -76,7 +76,7 @@ def protected():
     current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
 
-@app.route("/login", methods=["GET","POST"])
+@app.route("/login", methods=["GET","POST"], endpoint="login")
 @allow_access_only_browser
 def login():
     is_authen = get_is_auth()
@@ -91,7 +91,7 @@ def login():
                            is_authen=is_authen, 
                            form=authForm)  
 
-@app.route("/logout")
+@app.route("/logout", endpoint="logout")
 @allow_access_only_browser
 def logout():
     config.jwt_token = ""
@@ -138,7 +138,7 @@ def home():
                             deleteItemForm=deleteItemForm)
 
 # -------- ITEM DETAIL  ------------
-@app.route("/tasks/<int:task_id>", methods=["GET"])
+@app.route("/tasks/<int:task_id>/detail", methods=["GET"] ,endpoint="detail_item")
 @allow_access_only_browser
 def item(task_id):
     task_info = {}
@@ -157,7 +157,7 @@ def item(task_id):
 
 
 # -------- NEW ITEM  ------------
-@app.route("/tasks/new", methods=["GET", "POST"] , endpoint="new_item")
+@app.route("/tasks/new", methods=["GET", "POST"], endpoint="new_item")
 @allow_access_only_browser
 @requires_authentication
 def new_item():
@@ -248,8 +248,7 @@ def set_task_completed(task_id):
     
 # -------- DELETE ITEM  ------------
 @app.route("/tasks/<int:task_id>/delete", methods=["POST"], endpoint="delete_item")
-@allow_access_only_browser
-@requires_authentication
+#@requires_authentication
 def delete_item(task_id): 
     if model.is_number(task_id): 
         task_info = model.get_task_info(task_id)

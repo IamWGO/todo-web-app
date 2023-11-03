@@ -52,7 +52,7 @@
                   {% endif %}
                   
                 </td>
-                <td><a href="{{ url_for('item', task_id=item.id) }}" class="btn btn-sm btn-info">View</a></td>
+                <td><a href="{{ url_for('detail_item', task_id=item.id) }}" class="btn btn-sm btn-info">View</a></td>
                 <td><a href="{{ url_for('edit_item', task_id=item.id) }}" class="btn btn-sm btn-warning">Edit</a></td>
                 
                   {% if is_authen %}
