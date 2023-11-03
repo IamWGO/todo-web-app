@@ -4,6 +4,7 @@ from flask import (Flask, jsonify, request,
                    render_template,redirect, url_for, flash)
 
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
+from functools import wraps
 
 import requests
 import config
@@ -21,7 +22,7 @@ jwt = JWTManager(app)
 def get_is_auth():
     return config.jwt_token != "" 
  
-# #################### ENDPOINT - AUTH PROCESS ##########################
+# #################### AUTH PROCESS ##########################
 # the 'Authorization' header with the JWT token 
 def authorized_request():
     
@@ -37,6 +38,7 @@ def authorized_request():
 
     return response.status_code
 
+# #################### DECORATOR ##########################
 # Custom authentication decorator
 def requires_authentication(func):
     def decorated_function(*args, **kwargs):
@@ -46,7 +48,27 @@ def requires_authentication(func):
     
         return func(*args, **kwargs)
     return decorated_function
+ 
+def allow_access_only_postman(func):
+    def decorated_function(*args, **kwargs): 
+        user_agent = request.headers.get('User-Agent')
+        substring = "Postman"
+        if substring in user_agent:
+            return redirect(url_for("home"))
+        return func(*args, **kwargs)
+    return decorated_function
 
+def allow_access_only_browser(func):
+    def decorated_function(*args, **kwargs): 
+        user_agent = request.headers.get('User-Agent')
+        substring = "Postman"
+        if substring in user_agent:
+            return "Postman can't access to this URL"
+        return func(*args, **kwargs)
+    return decorated_function
+
+
+# #################### ENDPOINT - AUTH PROCESS ##########################
 @app.route("/protected", methods=["GET"])
 @jwt_required()
 def protected():
@@ -55,6 +77,7 @@ def protected():
     return jsonify(logged_in_as=current_user), 200
 
 @app.route("/login", methods=["GET","POST"])
+@allow_access_only_browser
 def login():
     is_authen = get_is_auth()
     authForm = utility.AuthForm() 
@@ -69,15 +92,16 @@ def login():
                            form=authForm)  
 
 @app.route("/logout")
+@allow_access_only_browser
 def logout():
     config.jwt_token = ""
     flash("You have logout !! ", "success")
     return redirect(url_for("home"))
 
 # #################### ENDPOINT - CRUD PROCESS ############### ###########
-
 # -------- LIST ITEMS  ------------
-@app.route("/")
+@app.route("/", endpoint="home")
+@allow_access_only_browser
 def home(): 
     deleteItemForm = utility.DeleteItemForm() 
     filter_form = utility.FilterForm(request.args, meta={"csrf": False})
@@ -115,6 +139,7 @@ def home():
 
 # -------- ITEM DETAIL  ------------
 @app.route("/tasks/<int:task_id>", methods=["GET"])
+@allow_access_only_browser
 def item(task_id):
     task_info = {}
     deleteItemForm = utility.DeleteItemForm() 
@@ -133,6 +158,7 @@ def item(task_id):
 
 # -------- NEW ITEM  ------------
 @app.route("/tasks/new", methods=["GET", "POST"] , endpoint="new_item")
+@allow_access_only_browser
 @requires_authentication
 def new_item():
     form = utility.NewItemForm() 
@@ -161,6 +187,7 @@ def new_item():
 
 # -------- UPDATE ITEM  ------------
 @app.route("/tasks/<int:task_id>/edit", methods=["GET", "POST"], endpoint="edit_item")
+@allow_access_only_browser
 @requires_authentication
 def edit_item(task_id):
  
@@ -204,6 +231,7 @@ def edit_item(task_id):
         
 # -------- COMPLATE TASK -------
 @app.route("/tasks/<int:task_id>/complate", methods=["POST"], endpoint="complete_item")
+@allow_access_only_browser
 @requires_authentication
 def set_task_completed(task_id):
     task_info = model.get_task_info(task_id) 
@@ -220,6 +248,7 @@ def set_task_completed(task_id):
     
 # -------- DELETE ITEM  ------------
 @app.route("/tasks/<int:task_id>/delete", methods=["POST"], endpoint="delete_item")
+@allow_access_only_browser
 @requires_authentication
 def delete_item(task_id): 
     if model.is_number(task_id): 
