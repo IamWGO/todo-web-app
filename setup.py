@@ -76,40 +76,22 @@ def logout():
     return redirect(url_for("home"))
 
 # #################### ENDPOINT - CRUD PROCESS ############### ###########
-# -------- ITEM DETAIL  ------------
-@app.route("/item/<int:task_id>", methods=["GET"])
-def item(task_id):
-    task_info = {}
-    if model.is_number(task_id):
-        deleteItemForm = utility.DeleteItemForm() 
-        task_info = model.get_task_info(int(task_id))
-        if task_info:
-            return render_template("item.html", 
-                                   is_authen = get_is_auth(),
-                                   item=task_info, 
-                                   deleteItemForm=deleteItemForm) 
-        else: 
-            flash("This item does not exist.", "danger")
-    else:
-        flash("This item does not exist.", "danger") 
-
-    return redirect(url_for("home")) 
-
 
 # -------- LIST ITEMS  ------------
 @app.route("/")
 def home(): 
-    form = utility.FilterForm(request.args, meta={"csrf": False})
+    deleteItemForm = utility.DeleteItemForm() 
+    filter_form = utility.FilterForm(request.args, meta={"csrf": False})
     filter_items = []
 
     filter_category = config.categories
     if not model.get_category_name_by_id(0):
         filter_category.insert(0, (0, "---"))
-    form.category.choices = filter_category
+    filter_form.category.choices = filter_category
 
-    if form.validate():  
-        title = form.title.data
-        category_id = int(form.category.data)
+    if filter_form.validate():  
+        title = filter_form.title.data
+        category_id = int(filter_form.category.data)
         
         if (title.strip() and category_id > 0):
             filter_items = model.search_by_title_and_category_name(title, category_id)
@@ -120,12 +102,37 @@ def home():
         else: 
             filter_items = model.get_all_tasks()
     else: 
-        filter_items = model.get_all_tasks()
+        filter_items = model.get_all_tasks() 
+
+    categories = config.categories
+    if model.get_category_name_by_id(0):
+        categories = categories[1:] 
  
-    return render_template("home.html",is_authen = get_is_auth(), items=filter_items, form=form)
+    return render_template("home.html",is_authen = get_is_auth(),
+                            items=filter_items,
+                            categories=categories,
+                            form=filter_form,
+                            deleteItemForm=deleteItemForm)
+
+# -------- ITEM DETAIL  ------------
+@app.route("/tasks/<int:task_id>", methods=["GET"])
+def item(task_id):
+    task_info = {}
+    deleteItemForm = utility.DeleteItemForm() 
+    task_info = model.get_task_info(int(task_id))
+    if task_info:
+        return render_template("item.html", 
+                                is_authen = get_is_auth(),
+                                item=task_info, 
+                                deleteItemForm=deleteItemForm) 
+    else: 
+        flash("This item does not exist.", "danger")
+
+    return redirect(url_for("home")) 
+
 
 # -------- NEW ITEM  ------------
-@app.route("/item/new", methods=["GET", "POST"])
+@app.route("/tasks/new", methods=["GET", "POST"])
 def new_item():
     # if not authorized then redirect to login
     auth_result = authorized_request()
@@ -133,9 +140,7 @@ def new_item():
         return redirect(url_for("login")) 
 
     form = utility.NewItemForm() 
-    if model.get_category_name_by_id(0):
-        form.category.choices = config.categories[1:]
-
+    
     # Form
     if form.validate_on_submit():
         if model.get_category_name_by_id(int(request.form['category'])):
@@ -159,7 +164,7 @@ def new_item():
 
 
 # -------- UPDATE ITEM  ------------
-@app.route("/item/<int:task_id>/edit", methods=["GET", "POST"])
+@app.route("/tasks/<int:task_id>/edit", methods=["GET", "POST"])
 def edit_item(task_id):
     # if not authorized then redirect to login
     auth_result = authorized_request()
@@ -185,13 +190,12 @@ def edit_item(task_id):
 
                 flash("Item {} has been successfully updated".format(form.title.data), "success")
                 return redirect(url_for("item", task_id=task_id))
-            
-            form.status.default = task_info["status"]
 
-            if model.get_category_name_by_id(0):
-                form.category.choices = config.categories[1:]
-            
+            form.category.choices = config.categories[1:]
             form.category.default = model.get_category_id_by_name(task_info["category"])
+
+            form.status.default = task_info["status"]
+            
             form.process()
             form.title.data       = task_info["title"]
             form.description.data = unescape(task_info["description"])
@@ -204,9 +208,24 @@ def edit_item(task_id):
         flash("This item does not exist.", "danger")
 
     return redirect(url_for("home")) 
+        
+# -------- COMPLATE TASK -------
+@app.route("/tasks/<int:task_id>/complate", methods=["POST"], endpoint="complete_item")
+def set_task_completed(task_id):
+    task_info = model.get_task_info(task_id) 
+    if task_info:
+        task_to_update = task_info
+        if not task_info["status"] == "Completed":
+            task_to_update["status"] = "Completed"
+            model.update_task(task_id, task_to_update) 
+            flash(f"You have set completed to task: \n {task_info["description"]}", "success")
+        else:
+            flash(f"Warning: You already completed task: \n {task_info["description"]}", "danger")
+
+    return redirect(url_for("home")) 
     
 # -------- DELETE ITEM  ------------
-@app.route("/item/<int:task_id>/delete", methods=["POST"])
+@app.route("/tasks/<int:task_id>/delete", methods=["POST"])
 def delete_item(task_id): 
     # if not authorized then redirect to login
     auth_result = authorized_request()

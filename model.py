@@ -66,7 +66,7 @@ def update_task(task_id, update_task):
             save_db()
             break
 
-def get_categories():
+def get_categories(): 
     return config.categories
 
 def get_category_name_by_id(category_id):
@@ -88,7 +88,8 @@ def get_category_id_by_name(category_name):
 def get_all_tasks():
     return task_items
 
-def get_tasks_by_category():
+# get parameter task_items because user might submmit fillter
+def get_tasks_by_category(task_items):
     tasks_by_category = {}
 
     # Group tasks by category
@@ -96,9 +97,8 @@ def get_tasks_by_category():
         category = task["category"]
         if category not in tasks_by_category:
             tasks_by_category[category] = []
-        
-        item = f"{task["description"]} - {task["status"]}"
-        tasks_by_category[category].append(item)
+         
+        tasks_by_category[category].append(task)
  
     return tasks_by_category
 

@@ -18,3 +18,10 @@ a:hover {
 textarea {
   resize: none;
 }
+
+
+.padded-rounded {
+  padding: 5px;
+  border-radius: 5px; /* You can adjust the value to control the roundness of the corners */
+}
+
