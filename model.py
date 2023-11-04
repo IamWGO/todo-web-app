@@ -86,16 +86,18 @@ def get_categories():
     #list_of_tuples = [(d['name'], d['age']) for d in data]
     return config.categories
 
-def add_new_category(new_category): 
-    category_items.append(new_category)
-    save_db(is_task=False)
-    
+def get_categories_tuples():
+    return [(item['id'], item['title']) for item in category_items]
+
 def get_category_info(category_id):
     for category in category_items:
         if category["id"] == category_id:
             return category  # Return the category if the ID matches
-    
-    return None  
+    return None
+
+def add_new_category(new_category): 
+    category_items.append(new_category)
+    save_db(is_task=False) 
 
 def delete_category(category_id):
     for index, category in enumerate(category_items):

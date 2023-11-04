@@ -2,14 +2,14 @@ from flask import Flask, jsonify, request, render_template
 import model
 
 app = Flask(__name__)
-
+# #################### BACKEND : TASK ##########################
 # 1. GET /tasks: Retrieves all tasks. For an "VG" (Very Good) requirement, add a "completed" parameter to filter by completed or uncompleted tasks.
 # 2. POST /tasks: Adds a new task. The task is initially uncompleted when first added.
 @app.route("/")
 @app.route("/tasks/", methods=["POST","GET"])
 def tasks():
     if request.method == "POST":
-        new_task = {"id": model.get_max_id(),
+        new_task = {"id": model.get_max_id(is_task=True),
                 "title": request.form['title'],
                 "description": request.form['description'],
                 "category": request.form['category'],
@@ -106,8 +106,64 @@ def search_task_by_category(category_name):
     return {"requirement": "Retrieves all tasks from a specific category.",
             "category": category_name,
             "result": task_by_category_name} 
-    
-# ---Error Handler----
+
+
+# #################### BACKEND : CATEGORY ##########################
+@app.route("/categories/", methods=["POST","GET"])
+def categories():
+    if request.method == "POST":
+        new_category = {"id": model.get_max_id(is_task=False),
+                "title": request.form['title'],
+                "status": "Active"
+                }
+        model.add_new_category(new_category)
+        
+        return {"requirement": "Adds a new category",
+                 "result": new_category}
+    else:
+        return {"requirement": "Retrieves all categories",
+            "result": model.category_items}
+
+
+@app.route("/categories/<int:category_id>", methods=["GET", "DELETE", "PUT"])
+def get_category(category_id):
+    category_info = model.get_category_info(category_id)
+    if not category_info == None:
+        if request.method == "GET":
+            return {
+                "requirement": "Retrieves a category with a specific ID",
+                "categoryId" :category_id,
+                "result": category_info}  
+        
+        elif request.method == "DELETE":
+            model.delete_category(category_id)
+            return {
+                    "requirement": "Deletes a category with a specific ID.",
+                    "categoryId" :category_id,
+                    "result": "deleted"}  
+        
+        elif request.method == "PUT":
+
+            status = "Active"
+            if 'status' in request.form:
+                status = request.form['status']
+
+            update_category = {"id": category_id,
+            "title": request.form['title'],
+            "status": status
+            }
+
+            model.update_category(category_id, update_category)
+            return  {"requirement": "Updates a category with a specific ID.",
+                     "categoryId" :category_id,
+                    "result": update_category}
+    else:
+            return {
+            "categoryId": category_id,
+            "result": "Not found"
+            } 
+
+# #################### ERROR HANDLER ##########################
 def page_404(e):
     return "The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again."
 
