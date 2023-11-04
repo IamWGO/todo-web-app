@@ -108,7 +108,7 @@ def home():
     filter_form = utility.FilterForm(request.args, meta={"csrf": False})
     filter_items = []
 
-    filter_category = config.categories
+    filter_category = model.categories
     if not model.get_category_name_by_id(0):
         filter_category.insert(0, (0, "---"))
     filter_form.category.choices = filter_category
@@ -128,7 +128,7 @@ def home():
     else: 
         filter_items = model.get_all_tasks() 
 
-    categories = config.categories
+    categories = model.categories
     if model.get_category_name_by_id(0):
         categories = categories[1:] 
  
@@ -153,9 +153,7 @@ def item(task_id):
     else: 
         flash("This item does not exist.", "danger")
 
-    return redirect(url_for("home")) 
-
-
+    return redirect(url_for("home"))
 
 # -------- NEW ITEM  ------------
 @app.route("/tasks/new", methods=["GET", "POST"], endpoint="new_tasks")
@@ -211,7 +209,7 @@ def edit_item(task_id):
             flash("Item {} has been successfully updated".format(form.title.data), "success")
             return redirect(url_for("detail_tasks", task_id=task_id))
 
-        form.category.choices = config.categories[1:]
+        form.category.choices = model.categories[1:]
         form.category.default = model.get_category_id_by_name(task_info["category"])
 
         form.status.default = task_info["status"]

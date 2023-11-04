@@ -8,6 +8,9 @@ task_items = []
 category_filename = "category.json"
 category_items = []
 
+# tuples for front end
+categories = []
+
 def load_db(filename):
     json_dict = {}
     try:
@@ -84,7 +87,7 @@ def update_task(task_id, update_task):
 # #################### MODEL : CATEGORY ##########################
 def get_categories(): 
     #list_of_tuples = [(d['name'], d['age']) for d in data]
-    return config.categories
+    return categories
 
 def get_categories_tuples():
     return [(item['id'], item['title']) for item in category_items]
@@ -116,14 +119,14 @@ def update_category(category_id, update_category):
 # #################### MODEL : QUERY FOR FRONTEND/BACKEND ##########################
 def get_category_name_by_id(category_id):
     # Iterate through the list of tuples
-    for item in config.categories:
+    for item in categories:
         if item[0] == category_id:
             return item[1]
     return None
  
 def get_category_id_by_name(category_name): 
     # Iterate through the list of tuples
-    for item in config.categories:
+    for item in categories:
         if item[1] == category_name:
             return item[0]
     return None
@@ -178,3 +181,4 @@ def search_task_by_title(search_text):
 # #################### MODEL : FETCH DATA ##########################
 task_items = load_db(task_filename)
 category_items = load_db(category_filename)
+categories = get_categories_tuples()
