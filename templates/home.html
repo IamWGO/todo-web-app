@@ -19,8 +19,19 @@
       </div>
     </div>
     <div class="col-lg-9">
-      <div class="row my-5 card-wrapper">
-        {% if items %}
+
+      <div class="row my-2">
+        <div class="col-lg-4">
+          <span class="p-1 rounded-left filter-header"> Title</span> 
+          <span class="m-2"> {{ filterTitle }}</span>
+        </div>
+        <div class="col-lg-4">
+          <span class="p-1 rounded-left filter-header"> Category</span>
+          <span class="m-2"> {{ filterCategory }}</span> 
+          </div>
+      </div>
+
+      <div class="row my-3 card-wrapper">
         <table class="table">
           <thead>
             <tr>
@@ -36,6 +47,7 @@
             </tr>
           </thead>
           <tbody>
+        {% if items %} 
           {% for item in items %} 
               <tr>
                 <th scope="row">{{ item.id }}</th>
@@ -68,11 +80,14 @@
                
               </tr> 
           {% endfor %}
-          </tbody>
-        </table>
+         
         {% else %}
-        <h1 class="offset-lg-3">No Tasks</h1>
+          <tr>
+            <th colspan="6"><h1 class="offset-lg-4">No Tasks</h1></th>
+          </tr>
         {% endif %}
+        </tbody>
+      </table>
       </div>
     </div>
   </div>

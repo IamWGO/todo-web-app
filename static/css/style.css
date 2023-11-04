@@ -25,3 +25,7 @@ textarea {
   border-radius: 5px; /* You can adjust the value to control the roundness of the corners */
 }
 
+.filter-header {
+  color: #19191a;
+  background-color: #b5b3b3;
+}

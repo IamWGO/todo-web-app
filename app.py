@@ -106,36 +106,48 @@ def logout():
 def home(): 
     deleteItemForm = utility.DeleteItemForm() 
     filter_form = utility.FilterForm(request.args, meta={"csrf": False})
-    filter_items = []
-
-    filter_category = model.categories
-    if not model.get_category_name_by_id(0):
-        filter_category.insert(0, (0, "---"))
-    filter_form.category.choices = filter_category
-
-    if filter_form.validate():  
-        title = filter_form.title.data
-        category_id = int(filter_form.category.data)
-        
-        if (title.strip() and category_id > 0):
-            filter_items = model.search_by_title_and_category_name(title, category_id)
-        elif title.strip():
-             filter_items = model.search_task_by_title(title)
-        elif category_id > 0:
-            filter_items = model.search_tasks_by_category_id(category_id)
-        else: 
-            filter_items = model.get_all_tasks()
-    else: 
-        filter_items = model.get_all_tasks() 
 
     categories = model.categories
     if model.get_category_name_by_id(0):
         categories = categories[1:] 
+
+    filter_items = []
+
+    filter_title = "-"
+    filter_category = "-"
+
+    category_items = model.categories
+    if not model.get_category_name_by_id(0):
+        category_items.insert(0, (0, "---"))
+    filter_form.category.choices = category_items
+
+    if filter_form.validate():  
+        title = filter_form.title.data
+        category_id = filter_form.category.data
+        
+        if (title.strip() and category_id > 0):
+            filter_items = model.search_by_title_and_category_name(title, category_id)
+            filter_title = title
+            
+            filter_category = model.get_category_name_by_id(category_id)
+        elif title.strip():
+             filter_title = title
+             filter_items = model.search_task_by_title(title)
+        elif category_id > 0:
+            filter_items = model.search_tasks_by_category_id(category_id)
+            filter_category = model.get_category_name_by_id(category_id)
+        else: 
+            filter_items = model.get_all_tasks()
+    else: 
+        filter_items = model.get_all_tasks() 
  
-    return render_template("home.html",is_authen = get_is_auth(),
+    return render_template("home.html",
+                           is_authen = get_is_auth(),
                             items=filter_items,
                             categories=categories,
                             form=filter_form,
+                            filterTitle=filter_title,
+                            filterCategory=filter_category,
                             deleteItemForm=deleteItemForm)
 
 # -------- ITEM DETAIL  ------------
@@ -144,7 +156,7 @@ def home():
 def item(task_id):
     task_info = {}
     deleteItemForm = utility.DeleteItemForm() 
-    task_info = model.get_task_info(int(task_id))
+    task_info = model.get_task_info(task_id)
     if task_info:
         return render_template("item.html", 
                                 is_authen = get_is_auth(),
@@ -164,8 +176,8 @@ def new_item():
     
     # Form
     if form.validate_on_submit():
-        if model.get_category_name_by_id(int(request.form['category'])):
-            category_name = model.get_category_name_by_id(int(request.form['category']))
+        category_name = model.get_category_name_by_id(request.form['category'])
+        if category_name:
             new_task = {"id": model.get_max_id(is_task=True),
                     "title": request.form['title'],
                     "description": request.form['description'],
@@ -196,7 +208,7 @@ def edit_item(task_id):
         form = utility.EditItemForm()
         
         if form.validate_on_submit(): 
-            category_name = model.get_category_name_by_id(int(request.form['category']))
+            category_name = model.get_category_name_by_id(request.form['category'])
             update_task = {"id": task_id,
                 "title": request.form['title'],
                 "description": request.form['description'],

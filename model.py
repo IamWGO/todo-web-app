@@ -64,7 +64,7 @@ def add_new_task(new_task):
     
 def get_task_info(task_id):
     for task in task_items:
-        if task["id"] == task_id:
+        if task["id"] == int(task_id):
             return task  # Return the task if the ID matches
     
     return None  
@@ -111,7 +111,7 @@ def delete_category(category_id):
     
 def update_category(category_id, update_category):
     for index, category in enumerate(category_items):
-        if category["id"] == category_id:
+        if category["id"] == int(category_id):
             category_items[index] = update_category
             save_db(is_task=False)
             break
@@ -120,7 +120,7 @@ def update_category(category_id, update_category):
 def get_category_name_by_id(category_id):
     # Iterate through the list of tuples
     for item in categories:
-        if item[0] == category_id:
+        if item[0] == int(category_id):
             return item[1]
     return None
  
