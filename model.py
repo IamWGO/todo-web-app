@@ -1,11 +1,14 @@
 import json
 import config
 
-# --------DB-----------
-filename = "task.json"
+# #################### MODEL : FILE MANAGER ##########################
+task_filename = "task.json"
 task_items = []
 
-def load_db():
+category_filename = "category.json"
+category_items = []
+
+def load_db(filename):
     json_dict = {}
     try:
         with open(filename, "r", encoding="utf-8") as file:
@@ -21,30 +24,41 @@ def load_db():
 
     return json_dict
 
-task_items = load_db()
+def save_db(is_task):
+    if is_task:
+        with open(task_filename, 'w') as f:
+            return json.dump(task_items, f, indent=4)
+    else:
+        with open(category_filename, 'w') as f:
+            return json.dump(category_items, f, indent=4)
 
-# --------Functions----------- 
-def save_db():
-    with open(filename, 'w') as f:
-        return json.dump(task_items, f, indent=4)
 
+def get_max_id(is_task):
+    items = []
+    if is_task:
+        items = load_db(task_filename)
+    else:
+        items = load_db(category_filename)
 
-def get_max_id():
-    task_items = load_db()
-    if not task_items: 
+    # Both Task and categegory has id as the key
+    if not items: 
         return 1
     else: 
         # Find the maximum ID in the list
-        max_id = max(task["id"] for task in task_items)
+        max_id = max(task["id"] for task in items)
         # Calculate the next ID
-        return max_id + 1
-    
+        return max_id + 1    
+
+            
+# #################### MODEL : TASK ##########################
+def get_all_tasks():
+    return task_items
+
 
 def add_new_task(new_task): 
     task_items.append(new_task)
-    save_db()
+    save_db(is_task=True)
     
-
 def get_task_info(task_id):
     for task in task_items:
         if task["id"] == task_id:
@@ -56,19 +70,48 @@ def delete_task(task_id):
     for index, task in enumerate(task_items):
         if task["id"] == task_id:
             del task_items[index]
-            save_db()
+            save_db(is_task=True)
             break
     
 def update_task(task_id, update_task):
     for index, task in enumerate(task_items):
         if task["id"] == task_id:
             task_items[index] = update_task
-            save_db()
+            save_db(is_task=True)
             break
 
+
+# #################### MODEL : CATEGORY ##########################
 def get_categories(): 
+    #list_of_tuples = [(d['name'], d['age']) for d in data]
     return config.categories
 
+def add_new_category(new_category): 
+    category_items.append(new_category)
+    save_db(is_task=False)
+    
+def get_category_info(category_id):
+    for category in category_items:
+        if category["id"] == category_id:
+            return category  # Return the category if the ID matches
+    
+    return None  
+
+def delete_category(category_id):
+    for index, category in enumerate(category_items):
+        if category["id"] == category_id:
+            del category_items[index]
+            save_db(is_task=False)
+            break
+    
+def update_category(category_id, update_category):
+    for index, category in enumerate(category_items):
+        if category["id"] == category_id:
+            category_items[index] = update_category
+            save_db(is_task=False)
+            break
+
+# #################### MODEL : QUERY FOR FRONTEND/BACKEND ##########################
 def get_category_name_by_id(category_id):
     # Iterate through the list of tuples
     for item in config.categories:
@@ -76,17 +119,12 @@ def get_category_name_by_id(category_id):
             return item[1]
     return None
  
-
 def get_category_id_by_name(category_name): 
     # Iterate through the list of tuples
     for item in config.categories:
         if item[1] == category_name:
             return item[0]
     return None
-            
-
-def get_all_tasks():
-    return task_items
 
 # get parameter task_items because user might submmit fillter
 def get_tasks_by_category(task_items):
@@ -111,7 +149,8 @@ def search_by_title_and_category_name(search_text, category_id):
             matching_tasks.append(task)
     return matching_tasks
 
-def search_tasks_by_category_name(category_name):
+def search_tasks_by_category_id(category_id):
+    category_name = get_category_name_by_id(category_id)
     matching_tasks = []
     for task in task_items:
         if category_name.lower() in task["category"].lower():
@@ -133,10 +172,7 @@ def search_task_by_title(search_text):
             matching_tasks.append(task)
     return matching_tasks
 
-# Helper methods
-def is_number(task_id):
-    try: 
-        int(task_id)
-        return True
-    except ValueError:
-        return False
+
+# #################### MODEL : FETCH DATA ##########################
+task_items = load_db(task_filename)
+category_items = load_db(category_filename)

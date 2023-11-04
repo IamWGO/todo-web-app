@@ -122,7 +122,7 @@ def home():
         elif title.strip():
              filter_items = model.search_task_by_title(title)
         elif category_id > 0:
-            filter_items = model.search_tasks_by_category_name(category_id)
+            filter_items = model.search_tasks_by_category_id(category_id)
         else: 
             filter_items = model.get_all_tasks()
     else: 
@@ -168,7 +168,7 @@ def new_item():
     if form.validate_on_submit():
         if model.get_category_name_by_id(int(request.form['category'])):
             category_name = model.get_category_name_by_id(int(request.form['category']))
-            new_task = {"id": model.get_max_id(),
+            new_task = {"id": model.get_max_id(is_task=True),
                     "title": request.form['title'],
                     "description": request.form['description'],
                     "category": category_name,
@@ -192,39 +192,38 @@ def new_item():
 @requires_authentication
 def edit_item(task_id):
  
-    if model.is_number(task_id): 
-        task_info = model.get_task_info(task_id) 
+    task_info = model.get_task_info(task_id) 
 
-        if task_info:
-            form = utility.EditItemForm()
-            
-            if form.validate_on_submit(): 
-                category_name = model.get_category_name_by_id(int(request.form['category']))
-                update_task = {"id": task_id,
-                    "title": request.form['title'],
-                    "description": request.form['description'],
-                    "category": category_name,
-                    "status": request.form['status']
-                    }
+    if task_info:
+        form = utility.EditItemForm()
+        
+        if form.validate_on_submit(): 
+            category_name = model.get_category_name_by_id(int(request.form['category']))
+            update_task = {"id": task_id,
+                "title": request.form['title'],
+                "description": request.form['description'],
+                "category": category_name,
+                "status": request.form['status']
+                }
 
-                model.update_task(task_id, update_task) 
+            model.update_task(task_id, update_task) 
 
-                flash("Item {} has been successfully updated".format(form.title.data), "success")
-                return redirect(url_for("detail_tasks", task_id=task_id))
+            flash("Item {} has been successfully updated".format(form.title.data), "success")
+            return redirect(url_for("detail_tasks", task_id=task_id))
 
-            form.category.choices = config.categories[1:]
-            form.category.default = model.get_category_id_by_name(task_info["category"])
+        form.category.choices = config.categories[1:]
+        form.category.default = model.get_category_id_by_name(task_info["category"])
 
-            form.status.default = task_info["status"]
-            
-            form.process()
-            form.title.data       = task_info["title"]
-            form.description.data = unescape(task_info["description"])
-            
+        form.status.default = task_info["status"]
+        
+        form.process()
+        form.title.data       = task_info["title"]
+        form.description.data = unescape(task_info["description"])
+        
 
-            return render_template("edit_item.html", 
-                                    is_authen = get_is_auth(),
-                                    item=task_info, form=form)
+        return render_template("edit_item.html", 
+                                is_authen = get_is_auth(),
+                                item=task_info, form=form)
     else: 
         flash("This item does not exist.", "danger")
 
@@ -253,14 +252,11 @@ def set_task_completed(task_id):
 @app.route("/tasks/<int:task_id>/delete", methods=["POST"], endpoint="delete_tasks")
 #@requires_authentication
 def delete_tasks(task_id): 
-    if model.is_number(task_id): 
-        task_info = model.get_task_info(task_id)
-        if task_info:
-            model.delete_task(task_id)
-            flash("Item {} has been successfully deleted.".format(task_info["title"]), "success")
-        else: 
-            flash("This item does not exist.", "danger")
-    else:
+    task_info = model.get_task_info(task_id)
+    if task_info:
+        model.delete_task(task_id)
+        flash("Item {} has been successfully deleted.".format(task_info["title"]), "success")
+    else: 
         flash("This item does not exist.", "danger")
 
     return redirect(url_for("home")) 
