@@ -1,12 +1,19 @@
-# Assignment
+# To-do App
 Your task is to create a "To-do App" using Python and Flask.
 
-The task is preferably carried out in pairs. Common grading will be done unless something comes up during the project.
+This project is a part of the basic Python course. It's good example for Create, Read, Update, and Delete (CRUD) for beginer Python developers.   
 
-The submission should be made via LearnPoint no later than November 9th at 23:59.
+
 
 ## Backend
-You are to create an API in Flask that reads data from the file `tasks.json` and modifies it with certain requests.
+You are to create an API in Flask that reads data from the file `tasks.json` and modifies it with certain requests with now html you will run on PostMan.
+
+    How to Config: 
+        FLASK_APP=app_backend.py
+        FLASK_ENV=development
+        FLASK_DEBUG=1
+    Run in terminal : 
+        flask run
 
 ### Endpoints
 
@@ -27,7 +34,14 @@ You are to create an API in Flask that reads data from the file `tasks.json` and
 - `GET /tasks/categories/{category_name}` Retrieves all tasks from a specific category.
 
 ## Frontend
-You should create a frontend using a Flask template. From this frontend, users should be able to view all tasks. For a higher grade (VG), there should also be a form where users can add a new task. The frontend is preferably placed in the root ("/").
+You should create a frontend using a Flask template. From this frontend, users should be able to view all tasks. For a higher grade (VG), there should also be a form where users can add a new task. The frontend is preferably placed in the root ("/") and you can only run on Browser.
+
+    How to Config: 
+        FLASK_APP=app.py
+        FLASK_ENV=development
+        FLASK_DEBUG=1
+    Run in terminal : 
+        flask run
 
 ## Grading Criteria
 
