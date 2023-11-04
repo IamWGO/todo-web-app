@@ -1,16 +1,17 @@
 {% extends 'base.html' %}
-{% set active_page = 'edit_item' %}
-{% from "_error_messages.html" import field_error_messages, error_messages %}
+{% set active_page = 'edit_tasks' %}
+{% from '_error_messages.html' import error_messages %}
 {% block title %}Edit {{ item.title }} - {% endblock %}
 
 {% block content %}
 <div class="row">
   <div class="col-lg-7 offset-lg-2 my-5">
     <h1>
-      Edit item: <a href="{{ url_for('edit_item', task_id=item.id) }}">{{ item.title }}</a>
+      Edit item: <a href="{{ url_for('detail_tasks', task_id=item.id) }}">{{ item.title }}</a>
     </h1><hr>
-    <form method="POST" action="{{ url_for('edit_item', task_id=item.id) }}" enctype="multipart/form-data">
+    <form method="POST" action="{{ url_for('edit_tasks', task_id=item.id) }}" enctype="multipart/form-data">
       {{ form.hidden_tag() }}
+      {{ error_messages(form.errors) }}
       <div class="form-group">
         <label>Category</label>
         {{ item.category }}
@@ -27,12 +28,10 @@
       <div class="form-group">
         {{ form.category.label }}
         {{ form.category(class="form-control") }}
-        {{ field_error_messages(form.category) }}
       </div>
       <div class="form-group">
         {{ form.status.label }}
         {{ form.status(class="form-control") }}
-        {{ field_error_messages(form.status) }}
       </div>
       <hr>
       {{ form.submit(class="btn btn-primary form-control") }}

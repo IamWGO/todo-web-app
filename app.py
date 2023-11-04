@@ -1,4 +1,3 @@
-from datetime import timedelta
 from html import unescape
 from flask import (Flask, jsonify, request, 
                    render_template,redirect, url_for, flash)
@@ -71,7 +70,7 @@ def allow_access_only_browser(func):
 
 
 # #################### ENDPOINT - AUTH PROCESS ##########################
-@app.route("/protected", methods=["GET"])
+@app.route("/protected", methods=["GET"], endpoint="protected")
 @jwt_required()
 def protected():
     # Access the identity of the current user with get_jwt_identity
@@ -140,7 +139,7 @@ def home():
                             deleteItemForm=deleteItemForm)
 
 # -------- ITEM DETAIL  ------------
-@app.route("/tasks/<int:task_id>/detail", methods=["GET"] ,endpoint="detail_item")
+@app.route("/tasks/<int:task_id>/detail", methods=["GET"] ,endpoint="detail_tasks")
 @allow_access_only_browser
 def item(task_id):
     task_info = {}
@@ -159,7 +158,7 @@ def item(task_id):
 
 
 # -------- NEW ITEM  ------------
-@app.route("/tasks/new", methods=["GET", "POST"], endpoint="new_item")
+@app.route("/tasks/new", methods=["GET", "POST"], endpoint="new_tasks")
 @allow_access_only_browser
 @requires_authentication
 def new_item():
@@ -188,7 +187,7 @@ def new_item():
 
 
 # -------- UPDATE ITEM  ------------
-@app.route("/tasks/<int:task_id>/edit", methods=["GET", "POST"], endpoint="edit_item")
+@app.route("/tasks/<int:task_id>/edit", methods=["GET", "POST"], endpoint="edit_tasks")
 @allow_access_only_browser
 @requires_authentication
 def edit_item(task_id):
@@ -211,7 +210,7 @@ def edit_item(task_id):
                 model.update_task(task_id, update_task) 
 
                 flash("Item {} has been successfully updated".format(form.title.data), "success")
-                return redirect(url_for("item", task_id=task_id))
+                return redirect(url_for("detail_tasks", task_id=task_id))
 
             form.category.choices = config.categories[1:]
             form.category.default = model.get_category_id_by_name(task_info["category"])
@@ -232,7 +231,7 @@ def edit_item(task_id):
     return redirect(url_for("home")) 
         
 # -------- COMPLATE TASK -------
-@app.route("/tasks/<int:task_id>/complate", methods=["POST"], endpoint="complete_item")
+@app.route("/tasks/<int:task_id>/complate", methods=["POST"], endpoint="complete_tasks")
 @allow_access_only_browser
 @requires_authentication
 def set_task_completed(task_id):
@@ -244,14 +243,16 @@ def set_task_completed(task_id):
             model.update_task(task_id, task_to_update) 
             flash(f"You have set completed to task: \n {task_info["description"]}", "success")
         else:
+            task_to_update["status"] = "Completed"
+            model.update_task(task_id, task_to_update) 
             flash(f"Warning: You already completed task: \n {task_info["description"]}", "danger")
 
     return redirect(url_for("home")) 
     
 # -------- DELETE ITEM  ------------
-@app.route("/tasks/<int:task_id>/delete", methods=["POST"], endpoint="delete_item")
+@app.route("/tasks/<int:task_id>/delete", methods=["POST"], endpoint="delete_tasks")
 #@requires_authentication
-def delete_item(task_id): 
+def delete_tasks(task_id): 
     if model.is_number(task_id): 
         task_info = model.get_task_info(task_id)
         if task_info:

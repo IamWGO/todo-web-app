@@ -32,8 +32,8 @@
 
           {% if active_page != 'login' %}
             {% if active_page != 'new_item' %}
-              <li class="nav-item {{ 'active' if active_page == 'new_item' else '' }}">
-                <a href="{{ url_for('new_item') }}" class="nav-link">Add new item</a> 
+              <li class="nav-item {{ 'active' if active_page == 'new_tasks' else '' }}">
+                <a href="{{ url_for('new_tasks') }}" class="nav-link">Add new item</a> 
               </li>
             {% endif %}
 
