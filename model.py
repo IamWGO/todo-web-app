@@ -121,17 +121,19 @@ def update_category(category_id, update_category):
 # #################### MODEL : QUERY FOR FRONTEND/BACKEND ##########################
 def get_category_name_by_id(category_id):
     # Iterate through the list of tuples
-    for item in categories:
-        if item[0] == int(category_id):
-            return item[1]
-    return None
+    return next((item[1] for item in categories if item[0] == int(category_id)), None)
+    # for item in categories:
+    #     if item[0] == int(category_id):
+    #         return item[1]
+    # return None
  
 def get_category_id_by_name(category_name): 
     # Iterate through the list of tuples
-    for item in categories:
-        if item[1] == category_name:
-            return item[0]
-    return None
+    return next((item[0] for item in categories if item[1] == category_name), None)
+    # for item in categories:
+    #     if item[1] == category_name:
+    #         return item[0]
+    # return None
 
 # get parameter task_items because user might submmit fillter
 def get_tasks_by_category(task_items):
@@ -147,45 +149,42 @@ def get_tasks_by_category(task_items):
  
     return tasks_by_category
 
-def search_by_title_and_category_name(task_items, search_text, category_id):
-    category_name = get_category_name_by_id(category_id)
-    matching_tasks = []
-    for task in task_items:
-        if (search_text.lower() in task["description"].lower() 
-            and category_name.lower() in task["category"].lower()):
-            matching_tasks.append(task)
-    return matching_tasks
-
 def search_tasks_by_category_id(task_items, category_id):
     category_name = get_category_name_by_id(category_id)
-    matching_tasks = []
-    for task in task_items:
-        if category_name.lower() in task["category"].lower():
-            matching_tasks.append(task)
-    return matching_tasks
+    return [task for task in task_items if category_name.lower() in task["category"].lower()]
+    
+    # matching_tasks = []
+    # for task in task_items:
+    #     if category_name.lower() in task["category"].lower():
+    #         matching_tasks.append(task)
+    # return matching_tasks
 
 def search_completed_tasks():
-    matching_tasks = []
-    for task in task_items:
-        if "completed" in task["status"].lower():
-            matching_tasks.append(task)
-    return matching_tasks
+    status = "completed"
+    return [task for task in task_items if status in task["status"].lower()]
+    # matching_tasks = []
+    # for task in task_items:
+    #     if "completed" in task["status"].lower():
+    #         matching_tasks.append(task)
+    # return matching_tasks
 
 def search_task_by_title(task_items, search_text):
     # Create a list to store matching items
-    matching_tasks = []
-    for task in task_items:
-        if search_text in task["title"]:
-            matching_tasks.append(task)
-    return matching_tasks
+    return [task for task in task_items if search_text in task["title"]]
+    # matching_tasks = []
+    # for task in task_items:
+    #     if search_text in task["title"]:
+    #         matching_tasks.append(task)
+    # return matching_tasks
 
 def search_task_by_status(task_items, status):
     # Create a list to store matching items
-    matching_tasks = []
-    for task in task_items:
-        if status in task["status"]:
-            matching_tasks.append(task)
-    return matching_tasks
+    return [task for task in task_items if status in task["status"]]
+    # matching_tasks = []
+    # for task in task_items:
+    #     if status in task["status"]:
+    #         matching_tasks.append(task)
+    # return matching_tasks
 
 
 # #################### MODEL : FETCH DATA ##########################

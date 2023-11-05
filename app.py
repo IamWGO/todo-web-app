@@ -116,7 +116,7 @@ def tasks():
 def completed():
     completed_tasks = model.search_completed_tasks()
     return {"requirement": "add a 'completed' parameter to filter by completed or uncompleted tasks",
-            "result": model.task_items}    
+            "result": completed_tasks}    
 
 # 3. GET /tasks/{task_id}: Retrieves a task with a specific ID.
 # 4. DELETE /tasks/{task_id}: Deletes a task with a specific ID.
