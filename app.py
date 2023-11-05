@@ -421,7 +421,7 @@ def set_task_completed(task_id):
     
 # -------- DELETE ITEM  ------------
 @app.route("/todo/<int:task_id>/delete", methods=["POST"], endpoint="delete_tasks")
-#@requires_authentication
+@requires_authentication
 def delete_tasks(task_id): 
     task_info = model.get_task_info(task_id)
     if task_info:
