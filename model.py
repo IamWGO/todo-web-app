@@ -90,6 +90,8 @@ def get_categories():
     return categories
 
 def get_categories_tuples():
+    print ([(item['id'], item['title']) for item in category_items])
+
     return [(item['id'], item['title']) for item in category_items]
 
 def get_category_info(category_id):
@@ -145,7 +147,7 @@ def get_tasks_by_category(task_items):
  
     return tasks_by_category
 
-def search_by_title_and_category_name(search_text, category_id):
+def search_by_title_and_category_name(task_items, search_text, category_id):
     category_name = get_category_name_by_id(category_id)
     matching_tasks = []
     for task in task_items:
@@ -154,7 +156,7 @@ def search_by_title_and_category_name(search_text, category_id):
             matching_tasks.append(task)
     return matching_tasks
 
-def search_tasks_by_category_id(category_id):
+def search_tasks_by_category_id(task_items, category_id):
     category_name = get_category_name_by_id(category_id)
     matching_tasks = []
     for task in task_items:
@@ -169,11 +171,19 @@ def search_completed_tasks():
             matching_tasks.append(task)
     return matching_tasks
 
-def search_task_by_title(search_text):
+def search_task_by_title(task_items, search_text):
     # Create a list to store matching items
     matching_tasks = []
     for task in task_items:
-        if search_text in task["description"]:
+        if search_text in task["title"]:
+            matching_tasks.append(task)
+    return matching_tasks
+
+def search_task_by_status(task_items, status):
+    # Create a list to store matching items
+    matching_tasks = []
+    for task in task_items:
+        if status in task["status"]:
             matching_tasks.append(task)
     return matching_tasks
 

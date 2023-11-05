@@ -9,8 +9,7 @@ import config
 class ItemForm(FlaskForm):
     title       = StringField("Title", validators=[InputRequired("Input is required!"), DataRequired("Data is required!"), Length(min=5, max=100, message="Input must be between 5 and 20 characters long")])
     description = TextAreaField("Description")
-    category    = SelectField("Category", choices=[(1,"Default"), (2, "Easy"), (3, "Medium"), (4, "Hard")],
-                               coerce=int, validators=[InputRequired()])
+    category    = SelectField("Category", coerce=int, validators=[InputRequired()])
  
 class NewItemForm(ItemForm):
     submit      = SubmitField("Submit")
@@ -32,4 +31,8 @@ class AuthForm(FlaskForm):
 class FilterForm(FlaskForm):
     title       = StringField("Title", validators=[Length(max=20)])
     category    = SelectField("Category", choices=[], coerce=int)
+    status    = SelectField("status",
+                            choices=[('Pending', 'Pending'),
+                                    ('Completed', 'Completed')],
+                            coerce=str)
     submit      = SubmitField("Filter")

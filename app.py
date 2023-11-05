@@ -95,7 +95,6 @@ def logout():
 # #################### BACKEND : TASK ##########################
 # 1. GET /tasks: Retrieves all tasks. For an "VG" (Very Good) requirement, add a "completed" parameter to filter by completed or uncompleted tasks.
 # 2. POST /tasks: Adds a new task. The task is initially uncompleted when first added.
-@app.route("/")
 @app.route("/tasks/", methods=["POST","GET"])
 def tasks():
     if request.method == "POST":
@@ -199,13 +198,14 @@ def search_task_by_category(category_name):
 
 
 # #################### BACKEND : CATEGORY ##########################
-@app.route("/categories/", methods=["POST","GET"])
+@app.route("/tasks/categories/", methods=["POST","GET"])
 def categories():
     if request.method == "POST":
         new_category = {"id": model.get_max_id(is_task=False),
                 "title": request.form['title'],
                 "status": "Active"
                 }
+        
         model.add_new_category(new_category)
         
         return {"requirement": "Adds a new category",
@@ -215,7 +215,7 @@ def categories():
             "result": model.category_items}
 
 
-@app.route("/categories/<int:category_id>", methods=["GET", "DELETE", "PUT"])
+@app.route("/tasks/categories/<int:category_id>", methods=["GET", "DELETE", "PUT"])
 def get_category(category_id):
     category_info = model.get_category_info(category_id)
     if not category_info == None:
@@ -269,32 +269,34 @@ def home():
     filter_items = []
 
     filter_title = "-"
+    filter_status = "-"
     filter_category = "-"
 
-    category_items = model.categories
-    if not model.get_category_name_by_id(0):
-        category_items.insert(0, (0, "---"))
+    category_items = model.get_categories_tuples()
+    category_items.insert(0, (0, "---"))   
     filter_form.category.choices = category_items
 
+    filter_form.status.choices.insert(0, ("-", "---"))
+
+    filter_items = model.get_all_tasks()
+
     if filter_form.validate():  
-        title = filter_form.title.data
+        filter_title = filter_form.title.data
+        filter_status = filter_form.status.data
         category_id = filter_form.category.data
-        
-        if (title.strip() and category_id > 0):
-            filter_items = model.search_by_title_and_category_name(title, category_id)
-            filter_title = title
+   
+        if filter_title.strip():
+             filter_items = model.search_task_by_title(filter_items, filter_title)
+        else:
+            filter_title = "-"
+
+        if not filter_status == "-":
+             filter_items = model.search_task_by_status(filter_items, filter_status)
             
+        
+        if category_id > 0:
+            filter_items = model.search_tasks_by_category_id(filter_items, category_id)
             filter_category = model.get_category_name_by_id(category_id)
-        elif title.strip():
-             filter_title = title
-             filter_items = model.search_task_by_title(title)
-        elif category_id > 0:
-            filter_items = model.search_tasks_by_category_id(category_id)
-            filter_category = model.get_category_name_by_id(category_id)
-        else: 
-            filter_items = model.get_all_tasks()
-    else: 
-        filter_items = model.get_all_tasks() 
  
     return render_template("home.html",
                            is_authen = get_is_auth(),
@@ -302,6 +304,7 @@ def home():
                             categories=categories,
                             form=filter_form,
                             filterTitle=filter_title,
+                            filterStatus=filter_status,
                             filterCategory=filter_category,
                             deleteItemForm=deleteItemForm)
 
@@ -328,6 +331,9 @@ def item(task_id):
 @requires_authentication
 def new_item():
     form = utility.NewItemForm() 
+
+    category_items = model.get_categories_tuples()
+    form.category.choices = category_items
     
     # Form
     if form.validate_on_submit():

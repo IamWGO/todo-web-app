@@ -12,6 +12,10 @@
             {{ form.title(class="form-control") }}
           </div>
           <div class="form-group">
+            {{ form.status.label }}
+            {{ form.status(class="form-control") }}
+          </div> 
+          <div class="form-group">
             {{ form.category.label }}
             {{ form.category(class="form-control") }}
           </div> 
@@ -22,14 +26,18 @@
     <div class="col-lg-9">
 
       <div class="row my-4">
-        <div class="col-lg-4">
+        <div class="col-lg-3">
           <span class="p-1 rounded-left filter-header"> Title</span> 
           <span class="m-2"> {{ filterTitle }}</span>
         </div>
-        <div class="col-lg-4">
+        <div class="col-lg-3">
+          <span class="p-1 rounded-left filter-header"> Status</span>
+          <span class="m-2"> {{ filterStatus }}</span> 
+        </div>
+        <div class="col-lg-3">
           <span class="p-1 rounded-left filter-header"> Category</span>
           <span class="m-2"> {{ filterCategory }}</span> 
-          </div>
+        </div>
       </div>
 
       <div class="row my-3 card-wrapper">
