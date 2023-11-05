@@ -217,7 +217,7 @@ def categories():
 
 @app.route("/tasks/categories/<int:category_id>", methods=["GET", "DELETE", "PUT"])
 def get_category(category_id):
-    category_info = model.get_category_info(category_id)
+    category_info = model.get(category_id)
     if not category_info == None:
         if request.method == "GET":
             return {

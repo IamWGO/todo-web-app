@@ -86,7 +86,6 @@ def update_task(task_id, update_task):
 
 # #################### MODEL : CATEGORY ##########################
 def get_categories(): 
-    #list_of_tuples = [(d['name'], d['age']) for d in data]
     return categories
 
 def get_categories_tuples():
@@ -95,10 +94,11 @@ def get_categories_tuples():
     return [(item['id'], item['title']) for item in category_items]
 
 def get_category_info(category_id):
-    for category in category_items:
-        if category["id"] == category_id:
-            return category  # Return the category if the ID matches
-    return None
+    return next((category for category in category_items if category["id"] == category_id), None)
+    # for category in category_items:
+    #     if category["id"] == category_id:
+    #         return category  # Return the category if the ID matches
+    # return None
 
 def add_new_category(new_category): 
     category_items.append(new_category)
