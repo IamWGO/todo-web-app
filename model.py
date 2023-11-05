@@ -57,7 +57,6 @@ def get_max_id(is_task):
 def get_all_tasks():
     return task_items
 
-
 def add_new_task(new_task): 
     task_items.append(new_task)
     save_db(is_task=True)
@@ -89,8 +88,6 @@ def get_categories():
     return categories
 
 def get_categories_tuples():
-    print ([(item['id'], item['title']) for item in category_items])
-
     return [(item['id'], item['title']) for item in category_items]
 
 def get_category_info(category_id):
@@ -158,6 +155,10 @@ def search_tasks_by_category_id(task_items, category_id):
     #     if category_name.lower() in task["category"].lower():
     #         matching_tasks.append(task)
     # return matching_tasks
+
+def search_tasks_by_category_name(task_items, category_name):
+    return [task for task in task_items if category_name.lower() in task["category"].lower()]
+    
 
 def search_completed_tasks():
     status = "completed"

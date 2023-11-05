@@ -191,17 +191,17 @@ def get_task_by_category():
  # 8. GET /tasks/categories/{category_name}: Retrieves all tasks from a specific category.
 @app.route("/tasks/categories/<string:category_name>")
 def search_task_by_category(category_name): 
-    task_by_category_name = model.search_tasks_by_category_name(category_name) 
+    task_by_category_name = model.search_tasks_by_category_name(model.task_items, category_name) 
     return {"requirement": "Retrieves all tasks from a specific category.",
             "category": category_name,
             "result": task_by_category_name} 
 
 
 # #################### BACKEND : CATEGORY ##########################
-# 9. GET /tasks/categories/: Retrieves all categories
-# 10. POST /tasks/categories/: Adds a new category
-@app.route("/tasks/categories/", methods=["POST","GET"])
-def categories():
+# 9. GET /tasks/category/: Retrieves all categories
+# 10. POST /tasks/category/: Adds a new category
+@app.route("/tasks/category", methods=["POST","GET"])
+def new_category():
     if request.method == "POST":
         new_category = {"id": model.get_max_id(is_task=False),
                 "title": request.form['title'],
@@ -216,28 +216,33 @@ def categories():
         return {"requirement": "Retrieves all categories",
             "result": model.category_items}
 
-# 11. GET /tasks/categories/<int:category_id>: Retrieves a category with a specific ID.
-# 12. DELETE /tasks/categories/<int:category_id>: Deletes a category with a specific ID.
-# 13. PUT /tasks/categories/<int:category_id>: Updates a category with a specific ID.
-@app.route("/tasks/categories/<int:category_id>", methods=["GET", "DELETE", "PUT"])
+# 11. GET /tasks/category/<int:category_id>: Retrieves a category with a specific ID.
+# 12. DELETE /tasks/category/<int:category_id>: Deletes a category with a specific ID.
+# 13. PUT /tasks/category/<int:category_id>: Updates a category with a specific ID.
+@app.route("/tasks/category/<int:category_id>", methods=["GET", "PUT", "DELETE"])
 def get_category(category_id):
-    category_info = model.get(category_id)
-    if not category_info == None:
-        if request.method == "GET":
-            return {
-                "requirement": "Retrieves a category with a specific ID",
-                "categoryId" :category_id,
-                "result": category_info}  
-        
-        elif request.method == "DELETE":
+    category_info = model.get_category_info(category_id) 
+    if request.method == "GET":
+        return {
+            "requirement": "Retrieves a category with a specific ID",
+            "categoryId" :category_id,
+            "result": category_info}  
+    
+    elif request.method == "DELETE":
+        result = ""
+        if category_info:
             model.delete_category(category_id)
-            return {
-                    "requirement": "Deletes a category with a specific ID.",
-                    "categoryId" :category_id,
-                    "result": "deleted"}  
-        
-        elif request.method == "PUT":
-
+            result = "deleted"
+        else:
+            result = "not found"
+            
+        return {
+                "requirement": "Deletes a category with a specific ID.",
+                "categoryId" :category_id,
+                "result": result} 
+    
+    elif request.method == "PUT":
+        if category_info:
             status = "Active"
             if 'status' in request.form:
                 status = request.form['status']
@@ -249,13 +254,12 @@ def get_category(category_id):
 
             model.update_category(category_id, update_category)
             return  {"requirement": "Updates a category with a specific ID.",
-                     "categoryId" :category_id,
+                        "categoryId" :category_id,
                     "result": update_category}
-    else:
-            return {
-            "categoryId": category_id,
-            "result": "Not found"
-            } 
+        else:
+            return  {"requirement": "Updates a category with a specific ID.",
+                        "categoryId" :category_id,
+                    "result": "not found"} 
 
 
 # #################### ENDPOINT - FRONTEND ##########################
