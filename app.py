@@ -11,7 +11,7 @@ import utility
 import model
 
 app = Flask(__name__)
-# #################### SECURITY ##########################
+# #################### AUTH PROCESS ##########################
 # security mechanisms used in web applications to protect against Cross-Site Request 
 app.secret_key = config.JWT_SECRET_KEY
 # Setup the Flask-JWT-Extended extension
@@ -20,8 +20,7 @@ jwt = JWTManager(app)
 
 def get_is_auth():
     return config.jwt_token != "" 
- 
-# #################### AUTH PROCESS ##########################
+
 # the 'Authorization' header with the JWT token 
 def authorized_request():
     
@@ -52,14 +51,6 @@ def is_access_from_postman():
     user_agent = request.headers.get('User-Agent')
     substring = "Postman"
     return substring in user_agent
- 
-def allow_access_only_postman(func):
-    def decorated_function(*args, **kwargs): 
-        if not is_access_from_postman():
-            flash(f"url [{request.url}] is not allowed to access", "danger")
-            return redirect(url_for("home"))
-        return func(*args, **kwargs)
-    return decorated_function
 
 def allow_access_only_browser(func):
     def decorated_function(*args, **kwargs): 
@@ -98,6 +89,170 @@ def logout():
     config.jwt_token = ""
     flash("You have logout !! ", "success")
     return redirect(url_for("home"))
+
+
+
+# #################### BACKEND : TASK ##########################
+# 1. GET /tasks: Retrieves all tasks. For an "VG" (Very Good) requirement, add a "completed" parameter to filter by completed or uncompleted tasks.
+# 2. POST /tasks: Adds a new task. The task is initially uncompleted when first added.
+@app.route("/")
+@app.route("/tasks/", methods=["POST","GET"])
+def tasks():
+    if request.method == "POST":
+        new_task = {"id": model.get_max_id(is_task=True),
+                "title": request.form['title'],
+                "description": request.form['description'],
+                "category": request.form['category'],
+                "status": "Pending"
+                }
+        model.add_new_task(new_task)
+        
+        return {"requirement": "Adds a new task. The task is initially uncompleted when first added",
+                 "result": new_task}
+    else:
+        return {"requirement": "Retrieves all tasks",
+            "result": model.task_items}
+
+@app.route("/tasks/completed/", methods=["GET"])
+def completed():
+    completed_tasks = model.search_completed_tasks()
+    return {"requirement": "add a 'completed' parameter to filter by completed or uncompleted tasks",
+            "result": model.task_items}    
+
+# 3. GET /tasks/{task_id}: Retrieves a task with a specific ID.
+# 4. DELETE /tasks/{task_id}: Deletes a task with a specific ID.
+# 5. PUT /tasks/{task_id}: Updates a task with a specific ID.
+@app.route("/tasks/<int:task_id>", methods=["GET", "DELETE", "PUT"])
+def get_task(task_id):
+    task_info = model.get_task_info(task_id)
+    if not task_info == None:
+        if request.method == "GET":
+            return {
+                "requirement": "Retrieves a task with a specific ID",
+                "taskId" :task_id,
+                "result": task_info}  
+        
+        elif request.method == "DELETE":
+            model.delete_task(task_id)
+            return {
+                    "requirement": "Deletes a task with a specific ID.",
+                    "taskId" :task_id,
+                    "result": "deleted"}  
+        
+        elif request.method == "PUT":
+            update_task = {"id": task_id,
+            "title": request.form['title'],
+            "description": request.form['description'],
+            "category": request.form['category'],
+            "status": request.form['status']
+            }
+
+            model.update_task(task_id, update_task)
+            return  {"requirement": "Updates a task with a specific ID.",
+                     "taskId" :task_id,
+                    "result": update_task}
+    else:
+            return {
+            "taskId": task_id,
+            "result": "Not found"
+            } 
+    
+# 6. PUT /tasks/{task_id}/complete: Marks a task as completed.
+@app.route("/tasks/<int:task_id>/complete", methods=["PUT"])
+def set_task_completed(task_id):
+    task_info = model.get_task_info(task_id)
+    if task_info:
+        task_to_update = task_info
+        if not task_info["status"] == "completed":
+            task_to_update["status"] = "completed"
+            model.update_task(task_id, task_to_update)
+            return  {
+                "requirement": "Marks a task as completed",
+                "taskId" :task_id,
+                "result": f"set completed task: \n {task_info["description"]}"} 
+        else:
+            return {
+                "requirement": "Marks a task as completed",
+                "taskId" :task_id,
+                "result": f"You already completed task: \n {task_info["description"]}"
+                } 
+    else:
+        return {
+            "taskId": task_id,
+            "result": "Not found"
+            }
+
+# 7. GET /tasks/categories/: Retrieves all different categories.
+@app.route("/tasks/categories", methods=["GET"])
+def get_task_by_category():
+    tasks_by_category = model.get_tasks_by_category(model.task_items)
+    return {"requirement": "Retrieves all different categories.",
+            "result": tasks_by_category} 
+
+ # 8. GET /tasks/categories/{category_name}: Retrieves all tasks from a specific category.
+@app.route("/tasks/categories/<string:category_name>")
+def search_task_by_category(category_name): 
+    task_by_category_name = model.search_tasks_by_category_name(category_name) 
+    return {"requirement": "Retrieves all tasks from a specific category.",
+            "category": category_name,
+            "result": task_by_category_name} 
+
+
+# #################### BACKEND : CATEGORY ##########################
+@app.route("/categories/", methods=["POST","GET"])
+def categories():
+    if request.method == "POST":
+        new_category = {"id": model.get_max_id(is_task=False),
+                "title": request.form['title'],
+                "status": "Active"
+                }
+        model.add_new_category(new_category)
+        
+        return {"requirement": "Adds a new category",
+                 "result": new_category}
+    else:
+        return {"requirement": "Retrieves all categories",
+            "result": model.category_items}
+
+
+@app.route("/categories/<int:category_id>", methods=["GET", "DELETE", "PUT"])
+def get_category(category_id):
+    category_info = model.get_category_info(category_id)
+    if not category_info == None:
+        if request.method == "GET":
+            return {
+                "requirement": "Retrieves a category with a specific ID",
+                "categoryId" :category_id,
+                "result": category_info}  
+        
+        elif request.method == "DELETE":
+            model.delete_category(category_id)
+            return {
+                    "requirement": "Deletes a category with a specific ID.",
+                    "categoryId" :category_id,
+                    "result": "deleted"}  
+        
+        elif request.method == "PUT":
+
+            status = "Active"
+            if 'status' in request.form:
+                status = request.form['status']
+
+            update_category = {"id": category_id,
+            "title": request.form['title'],
+            "status": status
+            }
+
+            model.update_category(category_id, update_category)
+            return  {"requirement": "Updates a category with a specific ID.",
+                     "categoryId" :category_id,
+                    "result": update_category}
+    else:
+            return {
+            "categoryId": category_id,
+            "result": "Not found"
+            } 
+
 
 # #################### ENDPOINT - FRONTEND ##########################
 # -------- LIST ITEMS  ------------
@@ -151,7 +306,7 @@ def home():
                             deleteItemForm=deleteItemForm)
 
 # -------- ITEM DETAIL  ------------
-@app.route("/tasks/<int:task_id>/detail", methods=["GET"] ,endpoint="detail_tasks")
+@app.route("/todo/<int:task_id>/detail", methods=["GET"] ,endpoint="detail_tasks")
 @allow_access_only_browser
 def item(task_id):
     task_info = {}
@@ -168,7 +323,7 @@ def item(task_id):
     return redirect(url_for("home"))
 
 # -------- NEW ITEM  ------------
-@app.route("/tasks/new", methods=["GET", "POST"], endpoint="new_tasks")
+@app.route("/todo/new", methods=["GET", "POST"], endpoint="new_tasks")
 @allow_access_only_browser
 @requires_authentication
 def new_item():
@@ -197,7 +352,7 @@ def new_item():
 
 
 # -------- UPDATE ITEM  ------------
-@app.route("/tasks/<int:task_id>/edit", methods=["GET", "POST"], endpoint="edit_tasks")
+@app.route("/todo/<int:task_id>/edit", methods=["GET", "POST"], endpoint="edit_tasks")
 @allow_access_only_browser
 @requires_authentication
 def edit_item(task_id):
@@ -240,7 +395,7 @@ def edit_item(task_id):
     return redirect(url_for("home")) 
         
 # -------- COMPLATE TASK -------
-@app.route("/tasks/<int:task_id>/complate", methods=["POST"], endpoint="complete_tasks")
+@app.route("/todo/<int:task_id>/complate", methods=["POST"], endpoint="complete_tasks")
 @allow_access_only_browser
 @requires_authentication
 def set_task_completed(task_id):
@@ -259,7 +414,7 @@ def set_task_completed(task_id):
     return redirect(url_for("home")) 
     
 # -------- DELETE ITEM  ------------
-@app.route("/tasks/<int:task_id>/delete", methods=["POST"], endpoint="delete_tasks")
+@app.route("/todo/<int:task_id>/delete", methods=["POST"], endpoint="delete_tasks")
 #@requires_authentication
 def delete_tasks(task_id): 
     task_info = model.get_task_info(task_id)
