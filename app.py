@@ -198,6 +198,8 @@ def search_task_by_category(category_name):
 
 
 # #################### BACKEND : CATEGORY ##########################
+# 9. GET /tasks/categories/: Retrieves all categories
+# 10. POST /tasks/categories/: Adds a new category
 @app.route("/tasks/categories/", methods=["POST","GET"])
 def categories():
     if request.method == "POST":
@@ -214,7 +216,9 @@ def categories():
         return {"requirement": "Retrieves all categories",
             "result": model.category_items}
 
-
+# 11. GET /tasks/categories/<int:category_id>: Retrieves a category with a specific ID.
+# 12. DELETE /tasks/categories/<int:category_id>: Deletes a category with a specific ID.
+# 13. PUT /tasks/categories/<int:category_id>: Updates a category with a specific ID.
 @app.route("/tasks/categories/<int:category_id>", methods=["GET", "DELETE", "PUT"])
 def get_category(category_id):
     category_info = model.get(category_id)
