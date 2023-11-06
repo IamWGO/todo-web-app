@@ -9,6 +9,7 @@ import requests
 import config
 import utility
 import model
+import http_request
 
 app = Flask(__name__)
 # #################### AUTH PROCESS ##########################
@@ -261,12 +262,7 @@ def get_category(category_id):
 @app.route("/", endpoint="home")
 @allow_access_only_browser
 def home(): 
-    filter_items = []
-    #Get Data from Backend
-    request_url = request.url_root + "/tasks"
-    response = requests.get(request_url)
-    if response.status_code == 200:  # Check for a successful HTTP status code
-        filter_items = response.json()
+    filter_items = http_request.request_all_tasks()
 
     deleteItemForm = utility.DeleteItemForm() 
     filter_form = utility.FilterForm(request.args, meta={"csrf": False})
@@ -316,13 +312,8 @@ def home():
 # -------- ITEM DETAIL  ------------
 @app.route("/todo/<int:task_id>/detail", methods=["GET"] ,endpoint="detail_tasks")
 @allow_access_only_browser
-def item(task_id):
-    task_info = {}
-    #Get Data from Backend
-    request_url = request.url_root + f"/tasks/{task_id}" 
-    response = requests.get(request_url)
-    if response.status_code == 200:  # Check for a successful HTTP status code
-        task_info = response.json()
+def item(task_id): 
+    task_info = http_request.request_task_by_id(task_id) 
 
     deleteItemForm = utility.DeleteItemForm() 
     task_info = model.get_task_info(task_id)
@@ -348,77 +339,39 @@ def new_item():
     
     # Form
     if form.validate_on_submit():
-        category_name = model.get_category_name_by_id(request.form['category'])
-        if category_name:
-            new_task = {"id": model.get_max_id(is_task=True),
-                    "title": request.form['title'],
-                    "description": request.form['description'],
-                    "category": category_name,
-                    "status": "Pending"
-                    }
-            
-                #Get Data from Backend
-            request_url = request.url_root + f"/tasks/" 
-            # Send a POST request with the form data
-            response = requests.post(request_url, data=new_task)
-            if response.status_code == 200:  # Check for a successful HTTP status code
-                flash("Item {} has been successfully submitted"
-                .format(request.form.get("title")), "success")
-            else: 
-                flash("Some thing wrong with add item process"
-                .format(request.form.get("title")), "danger")
-
-
-            # # Define headers including the 'Authorization' header
-            # headers = {
-            #     'Content-Type': 'application/json',
-            #     'Authorization': f"Bearer {config.jwt_token}"
-            # }
-
-            # response = requests.post(request_url, data=new_task, headers=headers)
-            # print(response.status_code)
-            # if response.status_code == 200:  # Check for a successful HTTP status code
-            #     task_info = response.json()
-            #     print(task_info)
-            #     # model.add_new_task(new_task)
-            #     # Redirect to some page
-            #     flash("Item {} has been successfully submitted"
-            #         .format(request.form.get("title")), "success")
-            
-            
-            return redirect(url_for("home")) 
-        else:
-            flash("Category is not matched with database", "danger")
+        response = http_request.add_new_task(request.form)
+        if response.status_code == 200:  # Check for a successful HTTP status code
+            flash("Item {} has been successfully submitted"
+            .format(request.form.get("title")), "success")
+        else: 
+            flash("Some thing wrong with add item process"
+            .format(request.form.get("title")), "danger") 
+        return redirect(url_for("home"))  
     
     return render_template("new_item.html", is_authen = get_is_auth(), form=form)
-
 
 # -------- UPDATE ITEM  ------------
 @app.route("/todo/<int:task_id>/edit", methods=["GET", "POST"], endpoint="edit_tasks")
 @allow_access_only_browser
-@requires_authentication
+# @requires_authentication
 def edit_item(task_id):
- 
-    task_info = model.get_task_info(task_id) 
+    task_info = http_request.request_task_by_id(task_id) 
 
     if task_info:
         form = utility.EditItemForm()
+        form.category.choices = model.categories[1:]
         
         if form.validate_on_submit(): 
-            category_name = model.get_category_name_by_id(request.form['category'])
-            update_task = {"id": task_id,
-                "title": request.form['title'],
-                "description": request.form['description'],
-                "category": category_name,
-                "status": request.form['status']
-                }
-
-            model.update_task(task_id, update_task) 
-
-            flash("Item {} has been successfully updated".format(form.title.data), "success")
-            return redirect(url_for("detail_tasks", task_id=task_id))
-
-        form.category.choices = model.categories[1:]
+            response = http_request.request_update_task(request.form, task_id)
+            if response.status_code == 200:  # Check for a successful HTTP status code
+                flash("Item {} has been successfully updated"
+                    .format(form.title.data), "success")
+                return redirect(url_for("detail_tasks", task_id=task_id))
+            else: 
+                flash("Some thing wrong with update item process"
+                .format(request.form.get("title")), "danger") 
+                
+ 
         form.category.default = model.get_category_id_by_name(task_info["category"])
 
         form.status.default = task_info["status"]
@@ -426,8 +379,6 @@ def edit_item(task_id):
         form.process()
         form.title.data       = task_info["title"]
         form.description.data = unescape(task_info["description"])
-        
-
         return render_template("edit_item.html", 
                                 is_authen = get_is_auth(),
                                 item=task_info, form=form)
