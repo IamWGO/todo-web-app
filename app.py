@@ -4,7 +4,7 @@ from flask import (Flask, jsonify, request,
 
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
 from functools import wraps
-
+import json
 import requests
 import config
 import utility
@@ -23,7 +23,6 @@ def get_is_auth():
 
 # the 'Authorization' header with the JWT token 
 def authorized_request():
-    
     headers = {
         'Authorization': f"Bearer {config.jwt_token}"
     }
@@ -103,14 +102,12 @@ def tasks():
                 "description": request.form['description'],
                 "category": request.form['category'],
                 "status": "Pending"
-                }
-        model.add_new_task(new_task)
-        
-        return {"requirement": "Adds a new task. The task is initially uncompleted when first added",
-                 "result": new_task}
+                } 
+        model.add_new_task(new_task) 
+        return {"status": 200,
+                 "result": "added new task"}
     else:
-        return {"requirement": "Retrieves all tasks",
-            "result": model.task_items}
+        return model.task_items
 
 @app.route("/tasks/completed/", methods=["GET"])
 def completed():
@@ -126,10 +123,7 @@ def get_task(task_id):
     task_info = model.get_task_info(task_id)
     if not task_info == None:
         if request.method == "GET":
-            return {
-                "requirement": "Retrieves a task with a specific ID",
-                "taskId" :task_id,
-                "result": task_info}  
+            return task_info 
         
         elif request.method == "DELETE":
             model.delete_task(task_id)
@@ -267,14 +261,19 @@ def get_category(category_id):
 @app.route("/", endpoint="home")
 @allow_access_only_browser
 def home(): 
+    filter_items = []
+    #Get Data from Backend
+    request_url = request.url_root + "/tasks"
+    response = requests.get(request_url)
+    if response.status_code == 200:  # Check for a successful HTTP status code
+        filter_items = response.json()
+
     deleteItemForm = utility.DeleteItemForm() 
     filter_form = utility.FilterForm(request.args, meta={"csrf": False})
 
     categories = model.categories
     if model.get_category_name_by_id(0):
         categories = categories[1:] 
-
-    filter_items = []
 
     filter_title = "-"
     filter_status = "-"
@@ -285,8 +284,6 @@ def home():
     filter_form.category.choices = category_items
 
     filter_form.status.choices.insert(0, ("-", "---"))
-
-    filter_items = model.get_all_tasks()
 
     if filter_form.validate():  
         filter_title = filter_form.title.data
@@ -321,6 +318,12 @@ def home():
 @allow_access_only_browser
 def item(task_id):
     task_info = {}
+    #Get Data from Backend
+    request_url = request.url_root + f"/tasks/{task_id}" 
+    response = requests.get(request_url)
+    if response.status_code == 200:  # Check for a successful HTTP status code
+        task_info = response.json()
+
     deleteItemForm = utility.DeleteItemForm() 
     task_info = model.get_task_info(task_id)
     if task_info:
@@ -336,7 +339,7 @@ def item(task_id):
 # -------- NEW ITEM  ------------
 @app.route("/todo/new", methods=["GET", "POST"], endpoint="new_tasks")
 @allow_access_only_browser
-@requires_authentication
+#@requires_authentication
 def new_item():
     form = utility.NewItemForm() 
 
@@ -354,10 +357,35 @@ def new_item():
                     "status": "Pending"
                     }
             
-            model.add_new_task(new_task)
-            # Redirect to some page
-            flash("Item {} has been successfully submitted"
+                #Get Data from Backend
+            request_url = request.url_root + f"/tasks/" 
+            # Send a POST request with the form data
+            response = requests.post(request_url, data=new_task)
+            if response.status_code == 200:  # Check for a successful HTTP status code
+                flash("Item {} has been successfully submitted"
                 .format(request.form.get("title")), "success")
+            else: 
+                flash("Some thing wrong with add item process"
+                .format(request.form.get("title")), "danger")
+
+
+            # # Define headers including the 'Authorization' header
+            # headers = {
+            #     'Content-Type': 'application/json',
+            #     'Authorization': f"Bearer {config.jwt_token}"
+            # }
+
+            # response = requests.post(request_url, data=new_task, headers=headers)
+            # print(response.status_code)
+            # if response.status_code == 200:  # Check for a successful HTTP status code
+            #     task_info = response.json()
+            #     print(task_info)
+            #     # model.add_new_task(new_task)
+            #     # Redirect to some page
+            #     flash("Item {} has been successfully submitted"
+            #         .format(request.form.get("title")), "success")
+            
+            
             return redirect(url_for("home")) 
         else:
             flash("Category is not matched with database", "danger")
