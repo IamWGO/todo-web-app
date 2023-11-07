@@ -90,8 +90,6 @@ def logout():
     flash("You have logout !! ", "success")
     return redirect(url_for("home"))
 
-
-
 # #################### BACKEND : TASK ##########################
 # 1. GET /tasks: Retrieves all tasks. For an "VG" (Very Good) requirement, add a "completed" parameter to filter by completed or uncompleted tasks.
 # 2. POST /tasks: Adds a new task. The task is initially uncompleted when first added.
@@ -155,26 +153,17 @@ def get_task(task_id):
 @app.route("/tasks/<int:task_id>/complete", methods=["PUT"])
 def set_task_completed(task_id):
     task_info = model.get_task_info(task_id)
+    print(task_info)
     if task_info:
         task_to_update = task_info
-        if not task_info["status"] == "completed":
-            task_to_update["status"] = "completed"
+        if not task_info["status"] == "Completed":
+            task_to_update["status"] = "Completed"
             model.update_task(task_id, task_to_update)
-            return  {
-                "requirement": "Marks a task as completed",
-                "taskId" :task_id,
-                "result": f"set completed task: \n {task_info["description"]}"} 
+            return  {"status": 200} 
         else:
-            return {
-                "requirement": "Marks a task as completed",
-                "taskId" :task_id,
-                "result": f"You already completed task: \n {task_info["description"]}"
-                } 
+            return {"status": 201, "msg": f"You already completed task"} 
     else:
-        return {
-            "taskId": task_id,
-            "result": "Not found"
-            }
+        return {"status": 404, "msg": "Not found"}
 
 # 7. GET /tasks/categories/: Retrieves all different categories.
 @app.route("/tasks/categories", methods=["GET"])
@@ -369,16 +358,14 @@ def edit_item(task_id):
                 return redirect(url_for("detail_tasks", task_id=task_id))
             else: 
                 flash("Some thing wrong with update item process"
-                .format(request.form.get("title")), "danger") 
-                
+                .format(request.form.get("title")), "danger")    
  
         form.category.default = model.get_category_id_by_name(task_info["category"])
-
         form.status.default = task_info["status"]
-        
         form.process()
         form.title.data       = task_info["title"]
         form.description.data = unescape(task_info["description"])
+
         return render_template("edit_item.html", 
                                 is_authen = get_is_auth(),
                                 item=task_info, form=form)
@@ -390,29 +377,23 @@ def edit_item(task_id):
 # -------- COMPLATE TASK -------
 @app.route("/todo/<int:task_id>/complate", methods=["POST"], endpoint="complete_tasks")
 @allow_access_only_browser
-@requires_authentication
+#@requires_authentication
 def set_task_completed(task_id):
-    task_info = model.get_task_info(task_id) 
-    if task_info:
-        task_to_update = task_info
-        if not task_info["status"] == "Completed":
-            task_to_update["status"] = "Completed"
-            model.update_task(task_id, task_to_update) 
-            flash(f"You have set completed to task: \n {task_info["description"]}", "success")
-        else:
-            task_to_update["status"] = "Completed"
-            model.update_task(task_id, task_to_update) 
-            flash(f"Warning: You already completed task: \n {task_info["description"]}", "danger")
+    response = http_request.request_update_completed(task_id)
+    if response.status_code == 200:
+        flash(f"You have set completed to task", "success")
+    else:
+        flash(f"Warning: You already completed task", "danger")
 
     return redirect(url_for("home")) 
     
 # -------- DELETE ITEM  ------------
 @app.route("/todo/<int:task_id>/delete", methods=["POST"], endpoint="delete_tasks")
-@requires_authentication
+#@requires_authentication
 def delete_tasks(task_id): 
     task_info = model.get_task_info(task_id)
     if task_info:
-        model.delete_task(task_id)
+        http_request.request_delete_task(task_id)
         flash("Item {} has been successfully deleted.".format(task_info["title"]), "success")
     else: 
         flash("This item does not exist.", "danger")
