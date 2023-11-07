@@ -5,16 +5,12 @@ import config
 task_items = {}
 category_items = {}
 categories = []
+task_filename = "task.json"
+category_filename = "category.json"
 
 # #################### MODEL : FILE MANAGER ##########################
-task_filename = "task.json"
-task_items = []
 
-category_filename = "category.json"
-category_items = []
 
-# tuples for front end
-categories = []
 
 def load_db(filename):
     json_dict = {}
@@ -97,10 +93,6 @@ def get_categories_tuples():
 
 def get_category_info(category_id):
     return next((category for category in category_items if category["id"] == category_id), None)
-    # for category in category_items:
-    #     if category["id"] == category_id:
-    #         return category  # Return the category if the ID matches
-    # return None
 
 def add_new_category(new_category): 
     category_items.append(new_category)
@@ -124,10 +116,6 @@ def update_category(category_id, update_category):
 def get_category_name_by_id(category_id):
     # Iterate through the list of tuples
     return next((item[1] for item in categories if item[0] == int(category_id)), None)
-    # for item in categories:
-    #     if item[0] == int(category_id):
-    #         return item[1]
-    # return None
  
 def get_category_id_by_name(category_name): 
     # Iterate through the list of tuples

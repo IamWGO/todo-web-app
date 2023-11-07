@@ -1,10 +1,7 @@
-from html import unescape
 from flask import (Flask, jsonify, request, 
                    render_template,redirect, url_for, flash)
 
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
-from functools import wraps
-import json
 import requests
 import config
 import utility
@@ -204,8 +201,7 @@ def new_category():
         return {"requirement": "Adds a new category",
                  "result": new_category}
     else:
-        return {"requirement": "Retrieves all categories",
-            "result": model.category_items}
+        return model.category_items
 
 # 11. GET /manage/category/<int:category_id>: Retrieves a category with a specific ID.
 # 12. DELETE /manage/category/<int:category_id>: Deletes a category with a specific ID.
@@ -259,7 +255,7 @@ def get_category(category_id):
 @allow_access_only_browser
 def home(): 
     filter_items = http_request.request_all_tasks()
-
+   
     deleteItemForm = utility.DeleteItemForm() 
     filter_form = utility.FilterForm(request.args, meta={"csrf": False})
 
@@ -371,7 +367,7 @@ def edit_item(task_id):
         form.status.default = task_info["status"]
         form.process()
         form.title.data       = task_info["title"]
-        form.description.data = unescape(task_info["description"])
+        form.description.data = task_info["description"]
 
         return render_template("edit_item.html", 
                                 is_authen = get_is_auth(),
@@ -408,24 +404,6 @@ def delete_tasks(task_id):
     return redirect(url_for("home")) 
 
 # -------- ERROR HANDLER  ------------
-def page_404(e):
-    if is_access_from_postman():
-        return "404: Page Not Found"
-    else:
-        return render_template("errors/404.html", is_authen = get_is_auth())
-
-def page_405(e):
-    if is_access_from_postman():
-        return "405: Method Not Allowed"
-    else:
-        return render_template("errors/405.html", is_authen = get_is_auth())
-
-def page_401(e):
-    if is_access_from_postman():
-        return "401: Unauthorized Error"
-    else:
-        return render_template("errors/401.html", is_authen = get_is_auth())
-
-app.register_error_handler(404, page_404)
-app.register_error_handler(405, page_405)
-app.register_error_handler(401, page_401)
+app.register_error_handler(404, utility.page_404)
+app.register_error_handler(405, utility.page_405)
+app.register_error_handler(401, utility.page_401)

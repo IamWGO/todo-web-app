@@ -7,6 +7,8 @@ def request_all_tasks():
     response = requests.get(request_url)
     if response.status_code == 200:  # Check for a successful HTTP status code
         return response.json()
+    else:
+        return []
 
 def request_task_by_id(task_id):
     request_url = request.url_root + f"/tasks/{task_id}" 
