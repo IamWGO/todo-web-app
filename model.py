@@ -1,6 +1,11 @@
 import json
 import config
 
+# #################### MODEL : FETCH DATA ##########################
+task_items = {}
+category_items = {}
+categories = []
+
 # #################### MODEL : FILE MANAGER ##########################
 task_filename = "task.json"
 task_items = []
@@ -186,9 +191,3 @@ def search_task_by_status(task_items, status):
     #     if status in task["status"]:
     #         matching_tasks.append(task)
     # return matching_tasks
-
-
-# #################### MODEL : FETCH DATA ##########################
-task_items = load_db(task_filename)
-category_items = load_db(category_filename)
-categories = get_categories_tuples()

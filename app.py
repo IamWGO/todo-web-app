@@ -12,6 +12,11 @@ import model
 import http_request
 
 app = Flask(__name__)
+
+model.task_items = model.load_db("task.json")
+model.category_items = model.load_db("category.json")
+model.categories = model.get_categories_tuples()
+
 # #################### AUTH PROCESS ##########################
 # security mechanisms used in web applications to protect against Cross-Site Request 
 app.secret_key = config.JWT_SECRET_KEY
@@ -92,21 +97,21 @@ def logout():
 
 # #################### BACKEND : TASK ##########################
 # 1. GET /tasks: Retrieves all tasks. For an "VG" (Very Good) requirement, add a "completed" parameter to filter by completed or uncompleted tasks.
+@app.route("/tasks/", methods=["GET"])
+def all_task():
+    return model.task_items
+
 # 2. POST /tasks: Adds a new task. The task is initially uncompleted when first added.
-@app.route("/tasks/", methods=["POST","GET"])
+@app.route("/tasks/", methods=["POST"])
 def tasks():
-    if request.method == "POST":
-        new_task = {"id": model.get_max_id(is_task=True),
+    new_task = {"id": model.get_max_id(is_task=True),
                 "title": request.form['title'],
                 "description": request.form['description'],
                 "category": request.form['category'],
                 "status": "Pending"
                 } 
-        model.add_new_task(new_task) 
-        return {"status": 200,
-                 "result": "added new task"}
-    else:
-        return model.task_items
+    model.add_new_task(new_task) 
+    return {"status": 200, "result": "added new task"}
 
 @app.route("/tasks/completed/", methods=["GET"])
 def completed():
@@ -115,40 +120,42 @@ def completed():
             "result": completed_tasks}    
 
 # 3. GET /tasks/{task_id}: Retrieves a task with a specific ID.
-# 4. DELETE /tasks/{task_id}: Deletes a task with a specific ID.
-# 5. PUT /tasks/{task_id}: Updates a task with a specific ID.
-@app.route("/tasks/<int:task_id>", methods=["GET", "DELETE", "PUT"])
+@app.route("/tasks/<int:task_id>", methods=["GET"])
 def get_task(task_id):
-    task_info = model.get_task_info(task_id)
-    if not task_info == None:
-        if request.method == "GET":
-            return task_info 
-        
-        elif request.method == "DELETE":
-            model.delete_task(task_id)
-            return {
-                    "requirement": "Deletes a task with a specific ID.",
-                    "taskId" :task_id,
-                    "result": "deleted"}  
-        
-        elif request.method == "PUT":
-            update_task = {"id": task_id,
-            "title": request.form['title'],
-            "description": request.form['description'],
-            "category": request.form['category'],
-            "status": request.form['status']
-            }
+    return model.get_task_info(task_id)
 
-            model.update_task(task_id, update_task)
-            return  {"requirement": "Updates a task with a specific ID.",
-                     "taskId" :task_id,
-                    "result": update_task}
-    else:
-            return {
-            "taskId": task_id,
-            "result": "Not found"
-            } 
+# 4. DELETE /tasks/{task_id}: Deletes a task with a specific ID.
+@app.route("/tasks/<int:task_id>", methods=["DELETE"])
+def delete_task(task_id):
+    task_info = model.get_task_info(task_id)
+    if not task_info:
+        return {"taskId": task_id,"result": "Not found"} 
+
+    model.delete_task(task_id)
+    return {
+            "requirement": "Deletes a task with a specific ID.",
+            "taskId" :task_id,
+            "result": "deleted"}  
+
+# 5. PUT /tasks/{task_id}: Updates a task with a specific ID.
+@app.route("/tasks/<int:task_id>", methods=["PUT"])
+def update_task(task_id):
+    task_info = model.get_task_info(task_id)
+    if not task_info:
+        return {"taskId": task_id,"result": "Not found"} 
     
+    update_task = {"id": task_id,
+    "title": request.form['title'],
+    "description": request.form['description'],
+    "category": request.form['category'],
+    "status": request.form['status']
+    }
+
+    model.update_task(task_id, update_task)
+    return  {"requirement": "Updates a task with a specific ID.",
+                "taskId" :task_id,
+            "result": update_task}
+ 
 # 6. PUT /tasks/{task_id}/complete: Marks a task as completed.
 @app.route("/tasks/<int:task_id>/complete", methods=["PUT"])
 def set_task_completed(task_id):
